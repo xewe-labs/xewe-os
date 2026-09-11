@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// src/Modules/Software/System/System.h
+// src/Modules/Core/System/System.h
 #pragma once
 
 #include <esp_system.h>
