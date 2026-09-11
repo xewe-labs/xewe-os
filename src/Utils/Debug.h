@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
- // Debug.h
+// src/Utils/Debug.h
 
 #pragma once
 
@@ -18,6 +18,8 @@
 
 #define DEBUG_Time              0
 #define DEBUG_Scheduler         0
+
+#define DEBUG_AsyncTimer        0
 
 
 #define DBG_ENABLED(cls)      (DEBUG_##cls)

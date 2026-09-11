@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// src/Modules/Wifi/Wifi.cpp
+// src/Modules/Software/Wifi/Wifi.cpp
 
 
 #include "Wifi.h"

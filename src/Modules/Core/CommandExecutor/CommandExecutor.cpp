@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// src/Modules/Software/CommandExecutor/CommandExecutor.cpp
+// src/Modules/Core/CommandExecutor/CommandExecutor.cpp
 
 #include "CommandExecutor.h"
 #include "../../Module/ModuleController.h"

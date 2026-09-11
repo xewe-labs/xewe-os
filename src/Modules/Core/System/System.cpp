@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// src/Modules/Software/System/System.cpp
+// src/Modules/Core/System/System.cpp
 
 #include "System.h"
 #include "../../Module/ModuleController.h"
