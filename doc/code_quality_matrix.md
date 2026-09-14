@@ -5,34 +5,26 @@
 | 🟢 high | code logic was rigorously reviewed by a human         |
 | 🟡 mid  | code is a mix of human logic and ai implementation     |
 | 🔴 low  | code is completely ai generated and may be very sloppy |
+| ⚪ none | not rated yet                                          |
 
-| File                                                 | Code quality |
-| ---------------------------------------------------- | ------------ |
-| `./Modules/Core/CommandExecutor/CommandExecutor.cpp` | 🟢 high      |
-| `./Modules/Core/CommandExecutor/CommandExecutor.h`   | 🟢 high      |
-| `./Modules/Core/Nvs/FlexData.h`                      | 🟢 high      |
-| `./Modules/Core/Nvs/Nvs.cpp`                         | 🟢 high      |
-| `./Modules/Core/Nvs/Nvs.h`                           | 🟢 high      |
-| `./Modules/Core/Nvs/Nvs.tpp`                         | 🟢 high      |
-| `./Modules/Core/SerialPort/SerialPort.cpp`           | 🟢 high      |
-| `./Modules/Core/SerialPort/SerialPort.h`             | 🟢 high      |
-| `./Modules/Core/System/System.cpp`                   | 🟢 high      |
-| `./Modules/Core/System/System.h`                     | 🟢 high      |
-| `./Modules/Hardware/Buttons/Buttons.cpp`             | 🟢 high      |
-| `./Modules/Hardware/Buttons/Buttons.h`               | 🟢 high      |
-| `./Modules/Hardware/Pins/Pins.cpp`                   | 🟡 mid       |
-| `./Modules/Hardware/Pins/Pins.h`                     | 🟡 mid       |
-| `./Modules/Module/Module.cpp`                        | 🟢 high      |
-| `./Modules/Module/Module.h`                          | 🟢 high      |
-| `./Modules/Module/ModuleController.cpp`              | 🟢 high      |
-| `./Modules/Module/ModuleController.h`                | 🟢 high      |
-| `./Modules/Software/WebInterface/WebInterface.cpp`   | 🟡 mid       |
-| `./Modules/Software/WebInterface/WebInterface.h`     | 🟡 mid       |
-| `./Modules/Software/Wifi/Wifi.cpp`                   | 🟢 high      |
-| `./Modules/Software/Wifi/Wifi.h`                     | 🟢 high      |
-| `./Tests/Nvs/NvsTester.cpp`                          | 🟡 mid       |
-| `./Tests/Nvs/NvsTester.h`                            | 🟡 mid       |
-| `./Tests/NvsFlex/NvsFlexTester.cpp`                  | 🟡 mid       |
-| `./Tests/NvsFlex/NvsFlexTester.h`                    | 🟡 mid       |
-| `./XeWeStringUtils.h`                                | 🟡 mid       |
+Framework code (module base, controller, system, serial, NVS, CLI, utils) now lives in the XeWe
+libraries and is rated there. The firmware modules were ported to the XeWeOS library API
+(renamed calls, dependencies passed through constructors); their logic is unchanged from the
+rated versions, except Wifi, Time, Scheduler and Buttons, which come from the newer xewe-led-os
+copies.
 
+| File                                   | Code quality |
+| -------------------------------------- | ------------ |
+| `./xewe-os.ino`                        | ⚪ none      |
+| `./src/Buttons/Buttons.cpp`            | 🟢 high      |
+| `./src/Buttons/Buttons.h`              | 🟢 high      |
+| `./src/Pins/Pins.cpp`                  | 🟡 mid       |
+| `./src/Pins/Pins.h`                    | 🟡 mid       |
+| `./src/Scheduler/Scheduler.cpp`        | ⚪ none      |
+| `./src/Scheduler/Scheduler.h`          | ⚪ none      |
+| `./src/Time/Time.cpp`                  | ⚪ none      |
+| `./src/Time/Time.h`                    | ⚪ none      |
+| `./src/WebInterface/WebInterface.cpp`  | 🟡 mid       |
+| `./src/WebInterface/WebInterface.h`    | 🟡 mid       |
+| `./src/Wifi/Wifi.cpp`                  | 🟢 high      |
+| `./src/Wifi/Wifi.h`                    | 🟢 high      |
