@@ -1,198 +1,80 @@
-# Adding and Integrating a New Module
+# Adding a Module
 
-This guide details the technical steps to create a new module (`ModuleName`) and integrate it into the `SystemController`.
+XeWe OS modules are built on the [XeWeOS framework](https://github.com/xewe-labs/xewe-library-os).
+The framework's README ("Writing a module") covers the full API and lifecycle, and its
+`extras/ModuleTemplate` folder is the starting point. This page covers how a module fits into
+this firmware.
 
-## 1. Module Creation
+## 1. Create the module
 
-Determine if the module interacts primarily with **Hardware** or **Software**. Create the directory structure in `src/Modules/<Type>/ModuleName`.
+Copy `extras/ModuleTemplate` from xewe-library-os to `src/<Name>/` and rename the files and
+the class, e.g. `src/Relay/Relay.h` and `src/Relay/Relay.cpp` with `class Relay`.
 
-**Example (Software Module):**
-
-* `src/Modules/Software/ModuleName/ModuleName.cpp`
-* `src/Modules/Software/ModuleName/ModuleName.h`
-* `src/Modules/Software/ModuleName/README.md` (Recommended)
-
-### Using Templates
-
-Use the existing templates in `src_templates` as a base:
-
-* Copy `src_templates/ModuleTemplate.h` -> `ModuleName.h`
-* Copy `src_templates/ModuleTemplate.cpp` -> `ModuleName.cpp`
-
-## 2. Implementation Details
-
-Your class `ModuleName` inherits from `Module`. You must define a constructor. Overriding other functions is optional.
-
-**Important:** When overriding parent methods, ensure the parent method is called within your implementation.
+* Firmware modules live in the global namespace, one folder per class, file names matching the
+  class.
+* Include the framework with `#include <XeWeOS.h>` and other firmware modules relatively, e.g.
+  `#include "../Wifi/Wifi.h"`.
+* Pick a short, unique `id` (at most 15 characters). It is the CLI group (`$relay`) and the NVS
+  namespace, so don't change it once devices store data under it.
 
 ```cpp
-void ModuleName::disable (const bool verbose, const bool do_restart) {
-    // Custom disable routines here
-    Module::disable(verbose, do_restart);
-}
-
-```
-
-### Constructor Configuration
-
-Define module properties in the constructor. Avoid running functional logic here; reserve logic for the `begin` routines.
-
-```cpp
-ModuleName::ModuleName(SystemController& controller)
-      : Module(controller,
-               /* module_name         */ "ModuleName",
-               /* module_description  */ "Brief description",
-               /* nvs_key             */ "key", // ~3 chars ideally
-               /* requires_init_setup */ false,
-               /* can_be_disabled     */ false,
-               /* has_cli_cmds        */ false)
-{}
-
-```
-
-#### Configuration Flags
-
-* **`requires_init_setup`**: If `true`, runs `begin_routines_init()` once on the first boot after upload. Used for one-time configurations (e.g., WiFi network selection).
-* **`can_be_disabled`**: If `true`, the module supports enable/disable functionality.
-* **`has_cli_cmds`**: If `true`, enables CLI support.
-* By default, adds `status` and `reset` commands.
-* If `can_be_disabled` is also `true`, adds `enable` and `disable` commands.
-
-
-
-### Defining CLI Commands
-
-Define custom commands within the constructor body using `commands_storage`.
-
-**Command Structure:**
-
-```cpp
-struct Command {
-    string              name;
-    string              description;
-    string              sample_usage;
-    size_t              arg_count;
-    command_function_t  function;
+struct RelayConfig {
+    uint8_t pin = 5;
 };
 
+class Relay : public xewe::os::Module {
+public:
+    Relay(xewe::os::ModuleController& controller, RelayConfig config = {});
+    void begin_routines_common() override;
+    void set(bool on);
+private:
+    RelayConfig config;
+};
 ```
 
-**Implementation Example:**
-
 ```cpp
-commands_storage.push_back({
-    "add",
-    "Add a button mapping: <pin> \"<$cmd ...>\" [pullup|pulldown] [on_press|on_release|on_change] [debounce_ms]",
-    std::string("$") + lower(module_name) + " add 9 \"$system reboot\" pullup on_press 50",
-    5,
-    [this](std::string_view args){ button_add_cli(args); }
-});
-
-```
-
-## 3. Lifecycle Logic (Begin Routines)
-
-There are four specific initialization phases. You may not need all of them, but they provide flexibility.
-
-1. **`begin_routines_required`**: Runs every boot.
-2. **`begin_routines_init`**: Runs on first boot or after `$enable`.
-3. **`begin_routines_regular`**: Runs on regular boot.
-4. **`begin_routines_common`**: Runs at the end of the boot process.
-![begin_flow.png](../static/media/resources/readme/begin_flow.webp)
-> **Note:** `begin` methods are called even if the module is disabled. This ensures pointers are valid for other modules that may reference this module.
-
-You can pass custom parameters to `begin()` using `ModuleNameConfig`.
-
-## 4. Loop and Custom Functions
-
-### Loop
-
-Place routine execution code here. Avoid blocking functions (like `delay()`) as they affect the entire system.
-
-### Custom Function Guidelines
-
-If your module can be disabled, you must explicitly check the state at the start of every public custom function. External modules may call your functions even when your module is disabled.
-
-```cpp
-void ModuleName::custom_function () {
-    // Safety check to prevent bugs when accessed by other modules
-    if (is_disabled()) return;
-    
-    // Custom logic here
+Relay::Relay(xewe::os::ModuleController& controller, RelayConfig config)
+    : Module(controller, "relay", "Relay", "Switches a relay",
+             /* requires_init_setup */ false,
+             /* can_be_disabled     */ true,
+             /* has_cli_commands    */ true)
+    , config(config) {
+    register_command({"on", "Turn the relay on", "$relay on", 0,
+                      [this](std::span<const std::string>) { set(true); }});
 }
-
 ```
 
----
+## 2. Depend on other modules through the constructor
 
-## 5. Integrating the New Module
-
-Follow these steps to register `ModuleName` with the `SystemController`.
-
-### Step 1: Update SystemController.h
-
-In `src/SystemController/SystemController.h`:
-
-1. Include the header:
-```cpp
-#include "../Modules/<Hardware|Software>/ModuleName/ModuleName.h"
-
-```
-
-
-2. Declare the member variable in `SystemController::public`:
-```cpp
-ModuleName module_name;
-
-```
-
-
-
-### Step 2: Update SystemController.cpp
-
-In `src/SystemController/SystemController.cpp`:
-
-**In `SystemController::SystemController()`:**
-
-1. Initialize the module in the constructor list:
-```cpp
-, module_name(*this)
-
-```
-
-
-2. Add to the modules array:
-```cpp
-modules.push_back(&module_name);
-```
-
-
-**In `SystemController::begin()`:**
-
-1. Define dependencies (if any) before initialization.
-* *Example: If ModuleName requires WiFi:*
-
+If the module uses another module, take it by reference and declare the requirement:
 
 ```cpp
-module_name.add_requirement(wifi); 
-
+Relay(xewe::os::ModuleController& controller, Time& time_module, RelayConfig config = {})
+    : Module(controller, ...), time_module(time_module) {
+    add_requirement(time_module);
+}
 ```
 
+A module whose requirement is disabled is disabled too; disabling the requirement cascades to it.
 
-2. Call `begin()`:
-```cpp
-module_name.begin(ModuleNameConfig {});
+## 3. Register it in `xewe-os.ino`
 
-```
-
-
-
-**Ordering Note:** Ensure your module initialization occurs before the command parser initialization:
+Include the header and declare the module after the modules it depends on:
 
 ```cpp
-// should be initialized last to collect all cmds
-command_parser.begin(CommandParserConfig {});
+#include "src/Relay/Relay.h"
 
+// ...
+Scheduler    scheduler     (os, time_module);
+Relay        relay         (os, time_module, {.pin = 5});
 ```
 
-That's it, congrats on getting your module in.
+Declaring the object is all it takes: it registers itself, begins in declaration order, and its
+commands appear under `$help`.
+
+## 4. Build and document
+
+* Build with the platform build script (see the README) and try the commands over serial.
+* Add the module and its commands to [MODULES.md](MODULES.md).
+* A module that is useful beyond this firmware should become its own library repo under
+  `xewe-labs` (see the rules in publish-arduino-library).

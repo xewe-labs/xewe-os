@@ -1,20 +1,25 @@
 # XeWe OS
 
-XeWe OS is a reusable base framework for ESP and Arduino projects. It provides common system, storage, hardware, and networking modules so developers can build application-specific modules without rewriting the same supporting code.
+XeWe OS is ready-to-flash firmware for ESP32 boards: a serial and web command line, WiFi, network
+time, weekly schedules, button bindings and direct pin control. It is built on the
+[XeWeOS framework](https://github.com/xewe-labs/xewe-library-os) and doubles as the reference
+example of assembling a device from XeWe modules.
 
 ## Overview
 
-The project organizes core and optional functionality into independent modules managed by a central `SystemController`. Modules can be configured, controlled through a command-line interface, and persisted in ESP32 NVS. It is intended for ESP developers who want a modular starting point for device firmware with optional GPIO, button, WiFi, and web control.
+The framework provides the module lifecycle, serial console, NVS storage, command line and the
+`$system` module. This repository adds the firmware's own modules in `src/` and assembles
+everything in `xewe-os.ino`. Modules are configured and controlled through the command line, and
+their settings persist in ESP32 NVS.
 
 ## Features
 
-* Modular architecture with independent core and optional modules
-* Runtime control through a text-based CLI
-* Persistent settings with ESP32 NVS
-* Non-blocking serial I/O
-* Hardware modules for GPIO, ADC, PWM, and I2C
+* Runtime control through a text-based CLI, over serial or HTTP
+* WiFi connection management with network selection on first boot
+* NTP time with timezone detection, and weekly command schedules
 * Button bindings with software debouncing
-* Optional WiFi and local web interface support
+* GPIO, ADC, PWM and I2C access without writing code
+* Persistent settings in ESP32 NVS; modules can be enabled, disabled and reset individually
 
 ## Installation
 
@@ -42,7 +47,7 @@ The project organizes core and optional functionality into independent modules m
    Clone the repo:
 
    ```bash
-   git clone https://github.com/maxdokukin/xewe-os
+   git clone https://github.com/xewe-labs/xewe-os
    cd xewe-os
    ```
 
@@ -120,51 +125,45 @@ For the full module and command reference, see `doc/MODULES.md`.
 
 ## Configuration
 
-* **Libraries:** Edit `build/libraries/required_libraries.txt` and rerun the setup script to install or update required libraries.
+* **Libraries:** `build/libraries/required_libraries.txt` lists the XeWe libraries (and
+  ArduinoJson) with pinned release tags. Rerun the setup script after changing it.
 
-Example `required_libraries.txt`:
+  ```text
+  https://github.com/xewe-labs/xewe-library-utils --branch 0.1.0
+  https://github.com/xewe-labs/xewe-library-os --branch 0.1.0
+  ```
 
-```text
-https://github.com/FastLED/FastLED.git --branch 3.10.3
-https://github.com/maxdokukin/xewe-led-library-espalexa
-https://github.com/maxdokukin/xewe-led-library-homespan
-https://github.com/maxdokukin/xewe-led-library-websockets
-https://github.com/bblanchon/ArduinoJson
-```
-
-* **Debug settings:** Enable per-module debug output in `src/Debug.h` by setting the relevant flag to `1`.
-
-```cpp
-#define DEBUG_SystemController  0
-#define DEBUG_Pins              1
-#define DEBUG_Wifi              0
-```
+* **Modules:** add, remove or reorder modules in `xewe-os.ino`; a module must be declared after
+  the modules it depends on.
+* **Debug output:** each module has a `DEBUG_<Module>` flag that defaults to `0` (e.g.
+  `DEBUG_Wifi` in `src/Wifi/Wifi.h`). Enable one from the build instead of editing the code, e.g.
+  with `--build-property "compiler.cpp.extra_flags=-DDEBUG_Wifi=1"`.
 
 ## Project Structure
 
-* `src/SystemController/` - system manager and module lifecycle control
-* `src/Modules/` - module implementations
-* `src/Modules/Hardware/` - hardware-facing modules such as Pins and Buttons
-* `src/Modules/Software/` - software modules such as Wifi, WebInterface, and NVS
-* `src/Modules/Module/` - base module class
-* `src/XeWeStringUtils.h` - zero-allocation string helpers
-* `src/Debug.h` - debug macros
+* `xewe-os.ino` - assembles the framework and the firmware modules
+* `Config.h` - project name, version and build timestamp written by the build script
+* `src/<Module>/` - firmware modules: Wifi, WebInterface, Time, Scheduler, Buttons, Pins
+* `build/` - build scripts, required libraries, release matrix
+* `static/` - released firmware for the web flasher, README media
 
 Additional documentation:
 
-* `doc/PROJECT_STRUCTURE.md`
-* `doc/ADDING_A_MODULE.md`
+* `doc/MODULES.md` - modules and commands
+* `doc/ADDING_A_MODULE.md` - writing and registering a module
+* `doc/PROJECT_STRUCTURE.md` - layout and where each piece comes from
 
 ## Development
 
-The system is centered around `SystemController`, which initializes and manages all `Module` instances.
+`xewe-os.ino` declares an `xewe::os::ModuleController` and the modules; each module registers
+itself and begins in declaration order. Module logic lives in `src/`, framework behaviour in the
+XeWe libraries.
 
-For local development:
-
-* Build and upload with the platform build script — `build/scripts/mac/build.sh`, `build/scripts/linux/build.sh`, or `build/scripts/windows/build.ps1`
-* Manage required libraries through `build/libraries/required_libraries.txt`
-* Use `src/Debug.h` to enable module-specific debug logging
-* See `doc/ADDING_A_MODULE.md` for custom module integration
+* Build and upload with the platform build script: `build/scripts/mac/build.sh`,
+  `build/scripts/linux/build.sh`, or `build/scripts/windows/build.ps1`
+* Change library versions in `build/libraries/required_libraries.txt`
+* See `doc/ADDING_A_MODULE.md` to add a module, and the
+  [XeWeOS README](https://github.com/xewe-labs/xewe-library-os) for the module API
 
 ## License
 

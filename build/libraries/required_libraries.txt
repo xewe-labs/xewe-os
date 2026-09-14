@@ -1,0 +1,8 @@
+# Libraries this firmware builds against, cloned into build/libraries by setup_build_environment.
+# One git repository per line, followed by git clone arguments. Pin every entry to a release tag.
+https://github.com/xewe-labs/xewe-library-utils --branch 0.1.0
+https://github.com/xewe-labs/xewe-library-serial --branch 0.1.0
+https://github.com/xewe-labs/xewe-library-nvs --branch 0.1.0
+https://github.com/xewe-labs/xewe-library-cli --branch 0.1.0
+https://github.com/xewe-labs/xewe-library-os --branch 0.1.0
+https://github.com/bblanchon/ArduinoJson --branch v7.4.2
