@@ -1,0 +1,7 @@
+scripts/
+tools/
+.venv/
+builds/
+libraries/
+build_config
+build_config.ps1
