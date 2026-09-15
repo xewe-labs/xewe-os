@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// xewe-os/src/WebInterface/WebInterface.h
+// xewe-os-module-web-interface/src/WebInterface/WebInterface.h
 #pragma once
 
 #include <WebServer.h>

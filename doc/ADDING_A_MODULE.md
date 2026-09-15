@@ -1,19 +1,30 @@
 # Adding a Module
 
-XeWe OS modules are built on the [XeWeOS framework](https://github.com/xewe-labs/xewe-library-os).
-The framework's README ("Writing a module") covers the full API and lifecycle, and its
-`extras/ModuleTemplate` folder is the starting point. This page covers how a module fits into
-this firmware.
+XeWe OS modules are built on the [XeWeOS framework](https://github.com/xewe-labs/xewe-library-os)
+and each lives in its own repo named `xewe-os-module-<slug>`, under any GitHub account.
+The [xewe-os-modules registry](https://github.com/xewe-labs/xewe-os-modules) lists them;
+`scripts/setup.sh` reads the registry, installs the chosen modules into `src/` and generates the
+declarations. The framework's README ("Writing a module") covers the API and lifecycle; its
+`extras/ModuleTemplate` folder is the starting point for the code.
 
-## 1. Create the module
+## 1. Create the module repo
 
-Copy `extras/ModuleTemplate` from xewe-library-os to `src/<Name>/` and rename the files and
-the class, e.g. `src/Relay/Relay.h` and `src/Relay/Relay.cpp` with `class Relay`.
+Copy an existing module repo (e.g. `xewe-os-module-pins`) as `xewe-os-module-<slug>` and replace
+its code. A module repo contains:
 
-* Firmware modules live in the global namespace, one folder per class, file names matching the
-  class.
-* Include the framework with `#include <XeWeOS.h>` and other firmware modules relatively, e.g.
-  `#include "../Wifi/Wifi.h"`.
+| Path | |
+|---|---|
+| `src/<Name>/<Name>.{h,cpp}` | the module; one folder named like the class |
+| `module.properties` | metadata read by `scripts/setup.sh` and `scripts/validate.sh` |
+| `xewe-os-module-<slug>.ino` | validation firmware: framework + required modules + this module |
+| `scripts/validate.sh` | builds that firmware on its own (copy it unchanged) |
+| `README.md`, `LICENSE.txt`, `.gitignore` | |
+
+Code conventions:
+
+* Global namespace, one folder per class, file names matching the class.
+* Include the framework with `#include <XeWeOS.h>` and other modules relatively, e.g.
+  `#include "../Wifi/Wifi.h"` (installed modules sit side by side in `src/`).
 * Pick a short, unique `id` (at most 15 characters). It is the CLI group (`$relay`) and the NVS
   namespace, so don't change it once devices store data under it.
 
@@ -57,24 +68,47 @@ Relay(xewe::os::ModuleController& controller, Time& time_module, RelayConfig con
 
 A module whose requirement is disabled is disabled too; disabling the requirement cascades to it.
 
-## 3. Register it in `xewe-os.ino`
+## 3. Describe it in `module.properties`
 
-Include the header and declare the module after the modules it depends on:
-
-```cpp
-#include "src/Relay/Relay.h"
-
-// ...
-Scheduler    scheduler     (os, time_module);
-Relay        relay         (os, time_module, {.pin = 5});
+```
+name=Relay
+slug=relay
+id=relay
+version=0.1.0
+description=Switches a relay from the command line and schedules
+repo=https://github.com/xewe-labs/xewe-os-module-relay
+folder=Relay
+include=src/Relay/Relay.h
+declare=Relay relay(os, time_module);
+depends_modules=time
+depends_libraries=XeWeOS (>=0.1.0)
 ```
 
-Declaring the object is all it takes: it registers itself, begins in declaration order, and its
-commands appear under `$help`.
+* `declare` is the exact line placed in the generated `src/Modules.h`. It may use `os` and the
+  variable names from the `declare` lines of its required modules (`wifi`, `time_module`, ...).
+* `depends_modules` lists module slugs; `setup.sh` and `validate.sh` add them (and their own
+  requirements) automatically and declare them first.
 
-## 4. Build and document
+## 4. Validate, publish, register
 
-* Build with the platform build script (see the README) and try the commands over serial.
-* Add the module and its commands to [MODULES.md](MODULES.md).
-* A module that is useful beyond this firmware should become its own library repo under
-  `xewe-labs` (see the rules in publish-arduino-library).
+```bash
+cd xewe-os-module-relay
+scripts/validate.sh                 # compiles framework + time + wifi + relay for c3, c6, s3
+scripts/validate.sh -b c3 -p <port> # run it on a board
+```
+
+Push the repo (e.g. `github.com/<you>/xewe-os-module-relay`), then open a pull request that
+adds its URL to `repositories.txt` in
+[xewe-os-modules](https://github.com/xewe-labs/xewe-os-modules); its README lists what reviewers
+check. Once merged, the module appears in every `scripts/setup.sh` checklist.
+
+Before that, try it with a local copy of the registry list, whose entries may also be local
+folders:
+
+```bash
+cp <xewe-os-modules clone>/repositories.txt /tmp/repositories.txt
+echo "$HOME/code/modules/xewe-os-module-relay" >> /tmp/repositories.txt
+scripts/setup.sh --modules relay --modules-index /tmp/repositories.txt
+```
+
+Add the module and its commands to [MODULES.md](MODULES.md).

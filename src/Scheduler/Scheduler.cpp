@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// xewe-os/src/Scheduler/Scheduler.cpp
+// xewe-os-module-scheduler/src/Scheduler/Scheduler.cpp
 
 #include "Scheduler.h"
 

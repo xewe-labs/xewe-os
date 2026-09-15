@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// xewe-os/src/Buttons/Buttons.cpp
+// xewe-os-module-buttons/src/Buttons/Buttons.cpp
 
 #include "Buttons.h"
 
