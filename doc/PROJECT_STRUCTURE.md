@@ -5,13 +5,15 @@ build toolchain. Paths marked `(generated)` are created by setup.sh and not comm
 
 ```text
 xewe-os/
-├── xewe-os.ino                         # ModuleController + #include "src/Modules.h"
+├── xewe-os.ino                         # ModuleController + #include "src/modules/Modules.h"
 ├── Config.h                            # PROJECT_NAME, BUILD_VERSION, BUILD_TIMESTAMP (written by build.sh)
 ├── scripts/setup.sh                    # choose modules, install modules + toolchain, run build setup
 │
-├── src/                                # (generated) by setup.sh, see src/.gitignore
-│   ├── Modules.h                       # includes and declarations of the chosen modules
-│   └── <Module>/                       # e.g. Wifi/, Time/ from module repos listed in xewe-os-modules
+├── src/
+│   └── modules/                        # (generated) by setup.sh, replaced on every run
+│       ├── .gitignore                  # ignores everything in src/modules/
+│       ├── Modules.h                   # includes and declarations of the chosen modules
+│       └── <Module>/                   # e.g. Wifi/, Time/ from module repos listed in xewe-os-modules
 │
 ├── build/
 │   ├── libraries/required_libraries.txt  # library repos and pinned tags, cloned by the build setup
@@ -32,7 +34,7 @@ xewe-os/
 | NVS storage, FlexData | [xewe-library-nvs](https://github.com/xewe-labs/xewe-library-nvs) (`XeWeNvs`) |
 | `$group command args` parser | [xewe-library-cli](https://github.com/xewe-labs/xewe-library-cli) (`XeWeCli`) |
 | String, validation, timer, debug helpers | [xewe-library-utils](https://github.com/xewe-labs/xewe-library-utils) (`XeWeUtils`) |
-| Wifi, WebInterface, Time, Scheduler, Buttons, Pins | `xewe-os-module-<slug>` repos listed in [xewe-os-modules](https://github.com/xewe-labs/xewe-os-modules) (installed into `src/`) |
+| Wifi, WebInterface, Time, Scheduler, Buttons, Pins | `xewe-os-module-<slug>` repos listed in [xewe-os-modules](https://github.com/xewe-labs/xewe-os-modules) (installed into `src/modules/`) |
 | Build, upload, release and format scripts | [xewe-os-build-toolchain](https://github.com/xewe-labs/xewe-os-build-toolchain) (installed into `build/toolchain/`) |
 
 Library versions come from the tags in `build/libraries/required_libraries.txt`; module and
