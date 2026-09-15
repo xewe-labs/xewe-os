@@ -3,7 +3,7 @@
 XeWe OS is built on the [XeWeOS framework](https://github.com/xewe-labs/xewe-library-os), which
 provides the serial console, NVS storage, the command line and the `System` module. Everything
 else comes from module repos (`xewe-os-module-<slug>`) installed with `scripts/setup.sh`, which
-declares them in `src/Modules.h` after the modules they require. Each module repo's README has
+declares them in `src/modules/Modules.h` after the modules they require. Each module repo's README has
 the same reference.
 
 <img src="../static/media/resources/readme/system_status.webp" style="max-width:300px;width:100%;height:auto;">
