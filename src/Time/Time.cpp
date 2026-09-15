@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// xewe-os/src/Time/Time.cpp
+// xewe-os-module-time/src/Time/Time.cpp
 
 #include "Time.h"
 

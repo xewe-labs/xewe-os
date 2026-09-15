@@ -1,9 +1,10 @@
 # Module & Command Reference
 
 XeWe OS is built on the [XeWeOS framework](https://github.com/xewe-labs/xewe-library-os), which
-provides the serial console, NVS storage, the command line and the `System` module. On top of
-that, this firmware adds its own modules. Modules are listed in the order they begin
-(their declaration order in `xewe-os.ino`).
+provides the serial console, NVS storage, the command line and the `System` module. Everything
+else comes from module repos (`xewe-os-module-<slug>`) installed with `scripts/setup.sh`, which
+declares them in `src/Modules.h` after the modules they require. Each module repo's README has
+the same reference.
 
 <img src="../static/media/resources/readme/system_status.webp" style="max-width:300px;width:100%;height:auto;">
 
@@ -32,10 +33,10 @@ monitor, the web interface, buttons and schedules.
 | **`mac`** | Print the device MAC addresses. | `$system mac` |
 | **`uid`** | Device UID from the eFuse base MAC (and SHA256-64). | `$system uid` |
 
-## Firmware modules
+## Modules
 
 ### Wifi
-**Prefix:** `$wifi` · asks for a network on first boot · can be disabled
+[xewe-os-module-wifi](https://github.com/xewe-labs/xewe-os-module-wifi) · **Prefix:** `$wifi` · asks for a network on first boot · can be disabled
 
 Joins a WiFi network (the chosen network is remembered in NVS) and keeps the connection alive.
 
@@ -46,7 +47,7 @@ Joins a WiFi network (the chosen network is remembered in NVS) and keeps the con
 | **`scan`** | List available networks. | `$wifi scan` |
 
 ### Web Interface
-**Prefix:** `$web_interface` · requires Wifi
+[xewe-os-module-web-interface](https://github.com/xewe-labs/xewe-os-module-web-interface) · **Prefix:** `$web_interface` · requires Wifi
 
 HTTP server on port 80 that serves a small page and accepts CLI commands from other devices on
 the network (`GET /cmd?c=<command>`).
@@ -56,7 +57,7 @@ the network (`GET /cmd?c=<command>`).
 | **`status`** | Server uptime and memory usage. | `$web_interface status` |
 
 ### Time
-**Prefix:** `$time` · requires Wifi · asks for the timezone on first boot · can be disabled
+[xewe-os-module-time](https://github.com/xewe-labs/xewe-os-module-time) · **Prefix:** `$time` · requires Wifi · asks for the timezone on first boot · can be disabled
 
 Synchronises the clock over NTP and detects or stores the timezone.
 
@@ -66,7 +67,7 @@ Synchronises the clock over NTP and detects or stores the timezone.
 | **`fetch`** | Sync the current time from the network. | `$time fetch` |
 
 ### Scheduler
-**Prefix:** `$schedule` · requires Time
+[xewe-os-module-scheduler](https://github.com/xewe-labs/xewe-os-module-scheduler) · **Prefix:** `$schedule` · requires Time
 
 Runs stored commands on a weekly schedule. Times are minutes from midnight (0-1439), days are
 0 (Monday) to 6 (Sunday); several commands are separated by `|`.
@@ -77,7 +78,7 @@ Runs stored commands on a weekly schedule. Times are minutes from midnight (0-14
 | **`remove`** | Remove a schedule by id. | `$schedule remove 1` |
 
 ### Buttons
-**Prefix:** `$buttons` · can be disabled
+[xewe-os-module-buttons](https://github.com/xewe-labs/xewe-os-module-buttons) · **Prefix:** `$buttons` · can be disabled
 
 Binds commands to physical buttons with software debouncing.
 
@@ -87,7 +88,7 @@ Binds commands to physical buttons with software debouncing.
 | **`remove`** | Remove a mapping by its id (see `$buttons status`). | `$buttons remove 0` |
 
 ### Pins
-**Prefix:** `$pins` · can be disabled
+[xewe-os-module-pins](https://github.com/xewe-labs/xewe-os-module-pins) · **Prefix:** `$pins` · can be disabled
 
 Direct hardware access without writing code.
 

@@ -7,8 +7,9 @@
 | 🔴 low  | code is completely ai generated and may be very sloppy |
 | ⚪ none | not rated yet                                          |
 
-Framework code (module base, controller, system, serial, NVS, CLI, utils) now lives in the XeWe
-libraries and is rated there. The firmware modules were ported to the XeWeOS library API
+Framework code (module base, controller, system, serial, NVS, CLI, utils) lives in the XeWe
+libraries and modules live in their `xewe-os-module-<slug>` repos; they are listed here with the
+path they are installed to by `scripts/setup.sh`. The modules were ported to the XeWeOS library API
 (renamed calls, dependencies passed through constructors); their logic is unchanged from the
 rated versions, except Wifi, Time, Scheduler and Buttons, which come from the newer xewe-led-os
 copies.
@@ -16,6 +17,7 @@ copies.
 | File                                   | Code quality |
 | -------------------------------------- | ------------ |
 | `./xewe-os.ino`                        | ⚪ none      |
+| `./scripts/setup.sh`                   | ⚪ none      |
 | `./src/Buttons/Buttons.cpp`            | 🟢 high      |
 | `./src/Buttons/Buttons.h`              | 🟢 high      |
 | `./src/Pins/Pins.cpp`                  | 🟡 mid       |
