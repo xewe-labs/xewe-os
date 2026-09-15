@@ -47,48 +47,49 @@ their settings persist in ESP32 NVS.
    ```bash
    git clone https://github.com/xewe-labs/xewe-os
    cd xewe-os
-   scripts/setup.sh
+   ./setup.sh
    ```
 
-   `scripts/setup.sh` assembles the firmware:
+   `setup.sh` assembles the firmware:
 
    1. shows a checklist of the modules listed in the
       [xewe-os-modules registry](https://github.com/xewe-labs/xewe-os-modules); modules required
       by your choice are added automatically,
    2. installs each chosen module into `src/modules/<Module>/` (only its source, without git history)
-      and generates `src/modules/Modules.h`, which declares them in dependency order,
-   3. installs the build toolchain ([xewe-os-build-toolchain](https://github.com/xewe-labs/xewe-os-build-toolchain))
-      into `build/toolchain/`, also without git history,
-   4. runs the toolchain's `setup_build_environment.sh` (arduino-cli, ESP32 core, Python venv,
-      required libraries).
+      and generates `src/modules/Modules.h`, which declares them in dependency order, and
+      `src/modules/modules.lock`, which records what was installed and from where,
+   3. copies `scripts/` and `tools/code_formatter/` of the build toolchain
+      ([xewe-os-build-toolchain](https://github.com/xewe-labs/xewe-os-build-toolchain)) into `build/`,
+   4. runs the toolchain's `build/scripts/<mac|linux>/setup.sh` (arduino-cli, ESP32 core, Python
+      venv, required libraries, `build_config`, `build/.gitignore`).
 
    Re-run it any time to change modules. Useful options:
 
    ```bash
-   scripts/setup.sh --modules wifi,scheduler         # skip the checklist
-   scripts/setup.sh --modules all
-   scripts/setup.sh --modules-index ./repositories.txt  # a different registry list (file or URL)
-   scripts/setup.sh --modules-source ~/code/modules  # skip the registry; use local xewe-os-module-* clones
-   scripts/setup.sh --modules-ref 0.1.0              # modules from a tag instead of main
-   scripts/setup.sh --skip-build-setup               # only install modules and toolchain
-   scripts/setup.sh -h                               # all options
+   ./setup.sh --modules wifi,scheduler               # skip the checklist
+   ./setup.sh --modules all
+   ./setup.sh --modules-index ./repositories.txt      # a different registry list (file or URL)
+   ./setup.sh --modules-source ~/code/modules        # skip the registry; use local xewe-os-module-* clones
+   ./setup.sh --modules-ref 0.1.0                    # modules from a tag instead of main
+   ./setup.sh --skip-build-setup                     # only install modules and toolchain
+   ./setup.sh -h                                     # all options
    ```
 
    `setup.sh` needs bash, git and curl (and `whiptail` for the checklist; otherwise a numbered
    menu is shown). On Windows run it from Git Bash or WSL, then run
-   `build\toolchain\scripts\windows\setup_build_environment.ps1` in PowerShell.
+   `build\scripts\windows\setup.ps1` in PowerShell.
 
    Build with the toolchain scripts. `-c` selects the chip (`c3`, `c6`, `s3`); `-p <port>` also
    uploads and opens the serial monitor.
 
    ```bash
-   build/toolchain/scripts/mac/build.sh -c c3                           # macOS, compile only
-   build/toolchain/scripts/mac/build.sh -c c3 -p /dev/cu.usbmodem1101   # compile + upload + monitor
-   build/toolchain/scripts/linux/build.sh -c c3 -p /dev/ttyUSB0         # Linux
+   build/scripts/mac/build.sh -c c3                           # macOS, compile only
+   build/scripts/mac/build.sh -c c3 -p /dev/cu.usbmodem1101   # compile + upload + monitor
+   build/scripts/linux/build.sh -c c3 -p /dev/ttyUSB0         # Linux
    ```
 
    ```powershell
-   build\toolchain\scripts\windows\build.ps1 -c c3 -p COM5                # Windows
+   build\scripts\windows\build.ps1 -c c3 -p COM5                # Windows
    ```
 
 ## Usage
@@ -124,7 +125,7 @@ For the full module and command reference, see `doc/MODULES.md`.
 
 ## Configuration
 
-* **Libraries:** `build/libraries/required_libraries.txt` lists the XeWe libraries (and
+* **Libraries:** `build/required_libraries.txt` lists the XeWe libraries (and
   ArduinoJson) with pinned release tags. Rerun the setup script after changing it.
 
   ```text
@@ -132,9 +133,13 @@ For the full module and command reference, see `doc/MODULES.md`.
   https://github.com/xewe-labs/xewe-library-os --branch 0.1.0
   ```
 
-* **Modules:** choose them with `scripts/setup.sh`. `src/modules/` (installed modules and `Modules.h`),
-  `build/toolchain/` and `build/modules.lock` (what was installed, from where) are generated and
-  not committed.
+* **Modules:** choose them with `setup.sh`. `src/modules/` (installed modules, `Modules.h` and
+  `modules.lock`) is generated and not committed.
+* **Version:** `build/version_state` holds the version counter (`MAJOR`, `MINOR`, `PATCH`,
+  `BUILD_ID`). `build.sh` bumps `PATCH` and `BUILD_ID` on every build and writes the result into
+  `Config.h`; `release.sh` reads it when picking a release version. It is committed, so each build
+  leaves a change in it.
+
 * **Debug output:** each module has a `DEBUG_<Module>` flag that defaults to `0` (e.g.
   `DEBUG_Wifi` in the Wifi module). Enable one from the build instead of editing the code, e.g.
   with `--build-property "compiler.cpp.extra_flags=-DDEBUG_Wifi=1"`.
@@ -143,9 +148,11 @@ For the full module and command reference, see `doc/MODULES.md`.
 
 * `xewe-os.ino` - declares the framework's `ModuleController` and includes the generated `src/modules/Modules.h`
 * `Config.h` - project name, version and build timestamp written by the build script
-* `scripts/setup.sh` - chooses and installs modules and the build toolchain
+* `setup.sh` - chooses and installs modules and the build toolchain
 * `src/modules/` - installed modules, `Modules.h` and `.gitignore` (generated by setup.sh)
-* `build/` - required libraries and release matrix; `build/toolchain/` is installed by setup.sh
+* `build/` - `required_libraries.txt`, `release_matrix.csv` and `version_state` (committed); the
+  toolchain's `scripts/` and `tools/` and the generated build state are installed there by setup.sh
+  and ignored
 * `static/` - released firmware for the web flasher, README media
 
 Additional documentation:
@@ -161,8 +168,8 @@ modules, each of which registers itself and begins in declaration order. Framewo
 lives in the XeWe libraries, module behaviour in the `xewe-os-module-*` repos.
 
 * Change a module in its own repo (each has `scripts/validate.sh` to build it on its own), then
-  re-run `scripts/setup.sh` here; `--modules-source` points it at local clones
-* Change library versions in `build/libraries/required_libraries.txt`
+  re-run `setup.sh` here; `--modules-source` points it at local clones
+* Change library versions in `build/required_libraries.txt`
 * See `doc/ADDING_A_MODULE.md` to create a module and add it to the registry, and the
   [XeWeOS README](https://github.com/xewe-labs/xewe-library-os) for the module API
 
