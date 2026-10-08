@@ -172,7 +172,7 @@ The tools never read or write `~/.arduino15` or `~/Arduino`.
 | `xewe-os-tools` | `pyproject.toml` | `vX.Y.Z` | tag |
 | `xewe-os` | `xewe.lock [project] version`, independent | `vX.Y.Z` (optional) | `xewe release`, binaries committed under `static/firmware/releases/` |
 
-The template pins, in `xewe.lock`: core `2.0.0`, modules `v0.2.0`, tools `v0.1.0`, ArduinoJson
+The template pins, in `xewe.lock`: core `2.0.1`, modules `v0.2.0`, tools `v0.1.1`, ArduinoJson
 `v7.4.3`; the template itself is `2.0.0`. A new core or modules release reaches a project only when
 its lock moves (`xewe lock update`).
 
