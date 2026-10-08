@@ -1,0 +1,24 @@
+# xewe.lock: pinned inputs of this firmware. Edit by hand or with `xewe lock update`.
+# ./setup.sh installs exactly these refs into build/.
+schema = 1
+
+[project]
+name = "xewe-os"
+version = "2.0.0"
+chip = "c3"
+
+[core]
+repo = "https://github.com/xewe-labs/xewe-os-core"
+ref = "2.0.0"
+
+[modules]
+repo = "https://github.com/xewe-labs/xewe-os-modules"
+ref = "v0.2.0"
+selected = []
+
+[tools]
+repo = "https://github.com/xewe-labs/xewe-os-tools"
+ref = "v0.1.0"
+
+[libraries]
+ArduinoJson = { repo = "https://github.com/bblanchon/ArduinoJson", ref = "v7.4.3" }
