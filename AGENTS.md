@@ -12,13 +12,14 @@ From the project root, after `./setup.sh`, always as `build/tools/.venv/bin/pyth
 - Inspect first: `xewe build --chip c3 --dry-run` prints the arduino-cli command
   (works before the toolchain is installed once `build/tools/.venv` exists; in a fresh project run
   `./setup.sh` first).
-- Build and test: `xewe build [--chip C | --all-chips]`, `xewe test [--host-only] [--module SLUG]`.
-  `-v` may go after the subcommand (`xewe test -v`).
+- Build and test: `xewe build [--chip C | --all-chips]`, `xewe test [--unit-only] [--module SLUG]`.
+  `-v` may go after the subcommand (`xewe test -v`). Project tests: `tests/board/` (pytest on the
+  board) and `tests/unit/` (developer machine, `@pytest.mark.unit`); nothing else under `tests/`.
 - Modules: `xewe modules list`, `xewe modules validate [PATH]`, `xewe modules select LIST|all|none`
-  (edits `xewe.lock`: only when asked). Zero modules is a valid project.
+  (edits `xewe.toml`: only when asked). Zero modules is a valid project.
 - Libraries a module needs come from `libraries.toml` in the modules repo, installed by `./setup.sh`;
-  a `[libraries]` pin in `xewe.lock` wins over it.
-- Also safe: `xewe doctor`, `xewe lock show`, `xewe boards --no-probe`.
+  a `[libraries]` pin in `xewe.toml` wins over it.
+- Also safe: `xewe doctor`, `xewe manifest show`, `xewe boards --no-probe`.
 - No board is normal (D22): `flash`, `run` and `test` exit 0 with
   `compiled, not run: no board attached (...)`; grep for that, it is not an error.
 - Compile-only session: `export XEWE_NO_BOARD=1` first. No port is listed, probed or opened even
@@ -32,8 +33,9 @@ From the project root, after `./setup.sh`, always as `build/tools/.venv/bin/pyth
 ## Never commit
 
 `build/`, `src/Modules.h`, venvs, editor files. The repo
-holds only `xewe-os.ino`, `Config.h`, `xewe.lock`, the scripts, docs and
-`static/firmware/releases/` (written by `xewe release`).
+holds only `xewe-os.ino`, `Config.h`, `xewe.toml`, `src/YourModule/` (the project-local example
+module; rename or delete it), the scripts, docs and `static/firmware/releases/` (written by
+`xewe release`).
 
 ## Code rules
 
@@ -44,4 +46,4 @@ holds only `xewe-os.ino`, `Config.h`, `xewe.lock`, the scripts, docs and
 - Modules live in the modules repo (its `CONTRACT.md` and `AGENTS.md`): constructor Os parameter
   named `host` (member stays `os`), handlers capture `[this]` only, never write `cli(` (macro).
 - Never edit `src/Modules.h` or `build/` by hand; they are regenerated.
-- The version is `[project] version` in `xewe.lock`, never a literal in code.
+- The version is `[project] version` in `xewe.toml`, never a literal in code.
