@@ -228,7 +228,7 @@ include is the umbrella `<XeWeCore.h>` (section 3).
 | D20 | `xewe-os` is a **GitHub template repository** and also plain-cloneable | "Use this template" gives fresh history; clone keeps working |
 | D21 | Modules are built and tested **through a `xewe-os` checkout** as the harness | The modules repo carries no toolchain; CI clones `xewe-os` at the lock ref with the module selected. One build path, nothing to drift |
 | D22 | **No board in phase 1.** Hardware tests are written but run compile-only; runner reports "compiled, not run" and exits 0 | Board tests executed by the user in step 5 |
-| D23 | **Autonomous run.** Opus agents code, main session verifies and steers; mid-level issues resolved and logged, only critical issues interrupt | Policy detail in `migration/phase_1/phase1-plan.md` (xewe-labs workspace) |
+| D23 | **Autonomous run.** Opus agents code, main session verifies and steers; mid-level issues resolved and logged, only critical issues interrupt | Policy detail in `docs/plans/phase1-plan.md` (xewe-labs workspace) |
 | D24 | **Phase 2 runs in development mode: no tags, releases or lock bumps** | Harness builds from the working trees (XEWE_*_SOURCE); release/tag discipline is defined with CI/CD in phase 3 |
 
 Open and deferred:

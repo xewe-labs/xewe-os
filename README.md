@@ -17,7 +17,7 @@ the decisions log.
 git clone https://github.com/xewe-labs/xewe-os my-fw && cd my-fw   # or "Use this template" on GitHub
 ./setup.sh                                  # no modules (valid); on a terminal it shows a menu
 ./setup.sh --modules wifi,web-interface     # or: all, none; dependencies are added for you
-./run.sh --chip c3                          # build, flash, open the serial console (interactive: type a command, Enter; Ctrl-C exits)
+./run.sh --chip c3                          # erase NVS (true first boot), build, flash, interactive console; ./run.sh --keep-nvs --chip c3 keeps settings
 build/tools/.venv/bin/python -m xewe build --all-chips   # c3, c6, s3
 ```
 
