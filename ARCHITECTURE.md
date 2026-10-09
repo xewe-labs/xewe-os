@@ -161,7 +161,9 @@ and that every other argument is a declared dependency. Validation replaced huma
 
 **`xewe.toml`** is the project's manifest, its whole dependency state: `[project]` (name, version, chip),
 `[core]`, `[modules]` (with `selected`) and `[tools]` (repo + ref each) and `[libraries]`
-(ArduinoJson). Only `manifest update`, `modules select`, `setup --modules` and `release` write it;
+(ArduinoJson). Only `manifest update`, `modules select`, `setup --modules`, the first-setup menu and
+`release` write it. The module selection is per project: the template ships `selected = []`, each
+project picks its modules at first setup (menu on a terminal, or `--modules`) and commits that choice;
 `setup --latest` tries newer tags without editing it. The firmware version is
 `[project] version`; builds never change it.
 

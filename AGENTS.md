@@ -33,9 +33,11 @@ From the project root, after `./setup.sh`, always as `build/tools/.venv/bin/pyth
 ## Never commit
 
 `build/`, `src/Modules.h`, venvs, editor files. The repo
-holds only `xewe-os.ino`, `Config.h`, `xewe.toml`, `src/YourModule/` (the project-local example
-module; rename or delete it), the scripts, docs and `static/firmware/releases/` (written by
-`xewe release`).
+holds only `xewe-os.ino`, `Config.h`, `xewe.toml`, `src/YourModule/` and `src/YourModuleFull/` (the
+project-local example modules, minimal and full tour; rename or delete them), the scripts, docs and
+`static/firmware/releases/` (written by `xewe release`).
+The template's `xewe.toml` keeps `[modules] selected = []`: the selection is per project, chosen at
+first setup (menu or `--modules`) and committed by the project, never by the template.
 
 ## Code rules
 
