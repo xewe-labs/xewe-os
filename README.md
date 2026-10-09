@@ -5,6 +5,7 @@ Os (serial console, CLI, NVS, system) plus the [modules](https://github.com/xewe
 you choose. The repository holds only its own code and `xewe.toml`; everything else is fetched at
 the pinned refs into `build/`, except the toolchain, which is shared by every project on the machine
 (`~/.xewe-os/build-tools/`). The layout is in [ARCHITECTURE.md](ARCHITECTURE.md#build-layout).
+Development mode: refs are `latest`; v3 tags will freeze them.
 
 Why it is shaped this way: [ARCHITECTURE.md](ARCHITECTURE.md) covers the four repos and their
 boundaries, the one `<XeWeCore.h>` include, the module contract, the tools, the version policy and
