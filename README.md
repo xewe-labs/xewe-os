@@ -2,7 +2,7 @@
 
 Firmware template for ESP32-C3, -C6 and -S3: [XeWeCore](https://github.com/xewe-labs/xewe-os-core)'s
 Os (serial console, CLI, NVS, system) plus the [modules](https://github.com/xewe-labs/xewe-os-modules)
-you choose. The repository holds only its own code and `xewe.lock`; everything else is fetched at
+you choose. The repository holds only its own code and `xewe.toml`; everything else is fetched at
 the pinned refs into `build/`, except the toolchain, which is shared by every project on the machine
 (`~/.xewe-os/build-tools/`). The layout is in [ARCHITECTURE.md](ARCHITECTURE.md#build-layout).
 
@@ -21,9 +21,9 @@ build/tools/.venv/bin/python -m xewe build --all-chips   # c3, c6, s3
 ```
 
 Needs Python >= 3.11 and git; no sudo. `./setup.sh` installs the xewe tools (venv in
-`build/tools/`), XeWeCore, ArduinoJson and the modules repo into `build/`, generates the selected
-modules as an Arduino library in `build/modules-lib/` and writes `src/Modules.h`. arduino-cli and
-the esp32 core go to `~/.xewe-os/build-tools/` (`XEWE_HOME` overrides `~/.xewe-os`): the **first run
+`build/tools/`), XeWeCore and ArduinoJson into `build/`, generates the selected modules as an Arduino
+library (with their tests) in `build/modules/` and writes `src/Modules.h`. arduino-cli, the esp32
+core and the modules repo go to `~/.xewe-os/build-tools/` (`XEWE_HOME` overrides `~/.xewe-os`): the **first run
 on a machine** downloads them once (~1.7 GB, ~8 GB on disk in total, ~4 min on a fast link); every later
 project and re-run reuses them and takes seconds. Already have the core? `./setup.sh --arduino-data
 DIR` (or `XEWE_ARDUINO_DATA=DIR`; `DIR` holds `packages/esp32/`). Nothing in `~/.arduino15` or
@@ -32,7 +32,7 @@ DIR` (or `XEWE_ARDUINO_DATA=DIR`; `DIR` holds `packages/esp32/`). Nothing in `~/
 Change modules later with `./setup.sh --modules LIST` or `build/tools/.venv/bin/python -m xewe modules
 select LIST|all|none`; `... modules list` shows what exists (`*` = selected). The menu only appears
 when nothing is selected yet. Zero modules is a valid firmware. Arduino libraries a module needs
-come from the modules repo's `libraries.toml` catalogue; a `[libraries]` pin in your `xewe.lock` wins.
+come from the modules repo's `libraries.toml` catalogue; a `[libraries]` pin in your `xewe.toml` wins.
 
 Run commands as `build/tools/.venv/bin/python -m xewe <command>` or `./run.sh`, not the bare `xewe`
 script: after moving or renaming the project folder that script breaks (stale venv shebang); re-run
@@ -43,21 +43,24 @@ script: after moving or renaming the project folder that script breaks (stale ve
 
 `./run.sh`, `build/tools/.venv/bin/python -m xewe flash` and `... -m xewe test` compile, then print
 `compiled, not run: no board attached (c3, build/builds/c3/out/2.0.0-c3-xewe-os.bin)` and exit 0.
-The test command runs host tests and reports hardware tests as "compiled, not run".
+The test command runs unit tests and reports board tests as "compiled, not run".
+Project tests go in `tests/board/` (pytest files that run on the ESP32 through `xewe test`) and
+`tests/unit/` (developer machine: `@pytest.mark.unit` Python, or C++ built with g++);
+`xewe test --unit-only` runs only the unit tests.
 Set `XEWE_NO_BOARD=1` for compile-only sessions (CI, agents): no port is ever opened, even with a
 board plugged in. Firmware lands in `build/builds/<chip>/out/`: `<version>-<chip>-xewe-os.bin` (flash at 0x0),
 `manifest.json`, `meta.json` (size, flash %), `compile.log`.
 
 ## Committed vs generated
 
-Committed: `xewe-os.ino`, `Config.h`, `xewe.lock`, `setup.sh`, `run.sh`, docs and
+Committed: `xewe-os.ino`, `Config.h`, `xewe.toml`, `setup.sh`, `run.sh`, docs and
 `static/firmware/releases/` (written by `xewe release`). Generated, ignored, safe to delete:
 `build/` and `src/Modules.h`. The shared toolchain in `~/.xewe-os/build-tools/` is outside the
 project; deleting it only means the next setup downloads it again. No submodules.
 
 ## Version and settings
 
-The firmware version is `[project] version` in `xewe.lock`; builds never change it. Your settings
+The firmware version is `[project] version` in `xewe.toml`; builds never change it. Your settings
 and defaults go in `Config.h`. It includes `<XeWeBuildInfo.h>` (generated per build: name, version,
 timestamp, chip, `--define` values). Never guard that include with `__has_include`: arduino-cli
 then drops the generated library and the defaults win silently. In a plain Arduino IDE build,
@@ -67,10 +70,25 @@ carry their own quotes:
 
 ## Your own module
 
-Your code goes in `setup()`/`loop()` of `xewe-os.ino`. A reusable module belongs in the modules
-repo: see its [README](https://github.com/xewe-labs/xewe-os-modules#adding-a-module) and
+`src/YourModule/` is your starting point: a complete project-local module (two commands, one
+NVS value, one setting) declared in `xewe-os.ino` after the generated modules. It is yours; setup
+never touches it. Rename the folder, the class and the id `your_module`, or delete the folder and
+its two lines in `xewe-os.ino`. Plain code can also go in `setup()`/`loop()` of `xewe-os.ino`.
+
+Flash it, open the console and try:
+
+```
+$help your_module           # its commands: set, show, status, reset, enable, disable
+$your_module set 42         # validated (0-1000) and saved to NVS
+$your_module show           # 42, also after $system restart
+$system status              # your module has a row in the table
+$your_module disable        # asks first; wipes its NVS, disables it and restarts
+```
+
+A reusable module belongs in the modules repo: see its
+[README](https://github.com/xewe-labs/xewe-os-modules#adding-a-module) and
 [CONTRACT.md](https://github.com/xewe-labs/xewe-os-modules/blob/main/CONTRACT.md). Never edit
-`src/Modules.h` or `build/modules-lib/` by hand; setup regenerates them.
+`src/Modules.h` or `build/modules/` by hand; setup regenerates them.
 
 ## License
 
