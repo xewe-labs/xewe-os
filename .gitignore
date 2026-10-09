@@ -3,6 +3,9 @@ build/
 # src/modules/: the selected modules, Modules.h and modules.lock (written by xewe modules generate).
 src/modules/
 
+# Credentials and settings for xewe provision/test (see .env.example in xewe-os-tools).
+.env
+
 # static/firmware/releases/ IS committed (release artefacts for the web flasher).
 
 # Editors and OS
