@@ -28,18 +28,21 @@ Already have the core? `./setup.sh --arduino-data DIR` (or `XEWE_ARDUINO_DATA=DI
 
 Change modules later with `./setup.sh --modules LIST` or `build/.venv/bin/python -m xewe modules
 select LIST|all|none`; `... modules list` shows what exists (`*` = selected). The menu only appears
-when nothing is selected yet. Zero modules is a valid firmware.
+when nothing is selected yet. Zero modules is a valid firmware. Arduino libraries a module needs
+come from the modules repo's `libraries.toml` catalogue; a `[libraries]` pin in your `xewe.lock` wins.
 
 Run commands as `build/.venv/bin/python -m xewe <command>` or `./run.sh`, not the bare `xewe`
 script: after moving or renaming the project folder that script breaks (stale venv shebang); re-run
-`./setup.sh` to fix it. `--help` lists everything (`build`, `flash`, `serial`, `test`, `doctor`, ...).
+`./setup.sh` to fix it. `--help` lists everything (`build`, `flash`, `serial`, `test`, `doctor`, ...);
+`-v` works after the subcommand too (`... -m xewe test -v`).
 
 ## No board? Still works
 
 `./run.sh`, `build/.venv/bin/python -m xewe flash` and `... -m xewe test` compile, then print
 `compiled, not run: no board attached (c3, build/out/c3/2.0.0-c3-xewe-os.bin)` and exit 0.
 The test command runs host tests and reports hardware tests as "compiled, not run".
-Firmware lands in `build/out/<chip>/`: `<version>-<chip>-xewe-os.bin` (flash at 0x0),
+Set `XEWE_NO_BOARD=1` for compile-only sessions (CI, agents): no port is ever opened, even with a
+board plugged in. Firmware lands in `build/out/<chip>/`: `<version>-<chip>-xewe-os.bin` (flash at 0x0),
 `manifest.json`, `meta.json` (size, flash %), `compile.log`.
 
 ## Committed vs generated
