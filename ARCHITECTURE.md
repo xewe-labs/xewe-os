@@ -47,28 +47,44 @@ generic tool that checks and releases `XeWeCore` (D18).
       (XeWeCore lib) <── each module has      (xewe: setup, build,
              ^           requires_core         flash, serial, test)
              │                                     │
-  publish-arduino-library                fetches core, modules, ArduinoJson,
-  (check + release XeWeCore)             arduino-cli and the esp32 core
-                                         into the project's build/
+  publish-arduino-library                fetches core, modules and ArduinoJson
+  (check + release XeWeCore)             into the project's build/; arduino-cli
+                                         and the esp32 core once per machine
 ```
 
-A project after `./setup.sh --modules wifi,time`:
+### Build layout
+
+A project after `./setup.sh --modules wifi,time`, and the toolchain it shares with every other
+project on the machine:
 
 ```
+~/.xewe-os/build-tools/      shared      once per machine; XEWE_HOME overrides ~/.xewe-os
+├── arduino15/                           esp32 core(s), toolchains, esptool (several core versions coexist)
+├── bin/arduino-cli-<ver>                one binary per pinned arduino-cli version
+├── arduino-user/                        empty sketchbook (isolates ~/Arduino/libraries)
+└── downloads/                           archives (XEWE_CACHE overrides)
+
 my-fw/
 ├── xewe-os.ino              committed   #include <XeWeCore.h>; XeWeOs os({...}); your setup()/loop()
 ├── Config.h                 committed   your defaults; includes the generated <XeWeBuildInfo.h>
 ├── xewe.lock                committed   [project] [core] [modules] [tools] [libraries]
-├── setup.sh  run.sh         committed   bootstrap build/.venv, then call `python -m xewe`
+├── setup.sh  run.sh         committed   bootstrap build/tools/.venv, then call `python -m xewe`
 ├── static/firmware/releases/  committed  written by `xewe release`
-├── src/modules/             generated   Wifi/  Time/  Modules.h (includes + declare lines)  modules.lock
-└── build/                   generated   .venv/  bin/arduino-cli  arduino15/ (esp32 core)
-                                         libraries/{XeWeCore,ArduinoJson}/  xewe-os-modules/
-                                         gen/<chip>/XeWeBuildInfo/  out/<chip>/*.bin
+├── src/Modules.h            generated   #include <XeWeModules.h> + the declare lines
+└── build/                   generated
+    ├── builds/<chip>/                   gen/XeWeBuildInfo/  cache/ (arduino-cli build path)  out/*.bin
+    ├── config/                          build_config.toml  boards.toml  modules.lock
+    ├── libraries/                       XeWeCore/  ArduinoJson/  (and libraries modules need)
+    ├── modules/                         the xewe-os-modules checkout
+    ├── modules-lib/                     generated Arduino library XeWeModules: src/Wifi/  src/Time/
+    ├── tools/                           the xewe-os-tools checkout; tools/.venv
+    └── tmp/                             sketch mirror, staging, pytest cache
 ```
 
-Nothing generated is committed and there are no submodules (D11). `build/` and `src/modules/` can
-be deleted at any time; `./setup.sh` rebuilds them from `xewe.lock`.
+The first `./setup.sh` on a machine downloads arduino-cli and the esp32 core once into
+`~/.xewe-os/build-tools/`; later projects reuse them. Nothing generated is committed and there are
+no submodules (D11). `build/` and `src/Modules.h` can be deleted at any time; `./setup.sh` rebuilds
+them from `xewe.lock`. The tools' `SPEC.md` §6 is the authoritative description.
 
 ## 3. XeWeCore shape
 
@@ -130,12 +146,12 @@ and that every other argument is a declared dependency. Validation replaced huma
 
 ## 5. Tools
 
-`xewe` (from `xewe-os-tools`, called as `build/.venv/bin/python -m xewe` or through `./run.sh`):
+`xewe` (from `xewe-os-tools`, called as `build/tools/.venv/bin/python -m xewe` or through `./run.sh`):
 
 | Command | Does |
 |---|---|
-| `setup` | arduino-cli, esp32 core, XeWeCore, libraries and modules into `build/`; generates `src/modules/` |
-| `build [--chip C \| --all-chips] [--define K=V]` | compile into `build/out/<chip>/`, prints flash % |
+| `setup` | arduino-cli and esp32 core into `~/.xewe-os/build-tools/` (once per machine); XeWeCore, libraries and modules into `build/`; generates `build/modules-lib/` and `src/Modules.h` |
+| `build [--chip C \| --all-chips] [--define K=V]` | compile into `build/builds/<chip>/out/`, prints flash % |
 | `flash`, `run`, `serial` | write the merged image at 0x0; build-flash-listen; timestamped console |
 | `test [--module SLUG] [--host-only] [--all-chips]` | pytest over project and module tests |
 | `boards`, `doctor`, `clean` | board discovery; environment check; delete generated output |
@@ -153,14 +169,15 @@ and that every other argument is a declared dependency. Validation replaced huma
 (1 for `test`). Agents grep for the line instead of treating it as an error.
 
 **Test layers (D14).** Host-native C++ tests for pure logic run with an Arduino shim and no board
-(`xewe-os-core/extras/host/`). Host-driven Python tests (`xewe test`) flash the firmware and assert
+(`xewe-os-core/tests/host/`). Host-driven Python tests (`xewe test`) flash the firmware and assert
 on serial output; without a board they report "compiled, not run", except `test_compiles`, which
 really builds. Hardware tests on a provisioned board are the same Python tests with a board
 attached. There are no on-device unit-test frameworks.
 
 **One board at a time, compile cost (D15).** A build costs about a minute per chip, so `build` and
-`test` compile only the selected chip; the c3/c6/s3 matrix runs with `--all-chips`. First setup
-downloads ~1.7 GB and installs ~6 GB into `build/`; `--arduino-data DIR` reuses an installed core.
+`test` compile only the selected chip; the c3/c6/s3 matrix runs with `--all-chips`. The first setup
+on a machine downloads ~1.7 GB and installs ~6 GB into `~/.xewe-os/build-tools/`; later projects
+reuse it, and `--arduino-data DIR` reuses an installed core elsewhere.
 The tools never read or write `~/.arduino15` or `~/Arduino`.
 
 ## 6. Versioning and release policy (D12)
