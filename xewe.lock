@@ -18,7 +18,7 @@ selected = ["wifi", "time"]
 
 [tools]
 repo = "https://github.com/xewe-labs/xewe-os-tools"
-ref = "v0.1.1"
+ref = "main"
 
 [libraries]
 ArduinoJson = { repo = "https://github.com/bblanchon/ArduinoJson", ref = "v7.4.3" }

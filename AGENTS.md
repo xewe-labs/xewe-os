@@ -6,11 +6,11 @@ unless the user asks.
 
 ## Running things
 
-From the project root, after `./setup.sh`, always as `build/.venv/bin/python -m xewe ...`
+From the project root, after `./setup.sh`, always as `build/tools/.venv/bin/python -m xewe ...`
 (the bare `xewe` script breaks when the project is moved; re-run `./setup.sh` then).
 
 - Inspect first: `xewe build --chip c3 --dry-run` prints the arduino-cli command
-  (works before the toolchain is installed once `build/.venv` exists; in a fresh project run
+  (works before the toolchain is installed once `build/tools/.venv` exists; in a fresh project run
   `./setup.sh` first).
 - Build and test: `xewe build [--chip C | --all-chips]`, `xewe test [--host-only] [--module SLUG]`.
   `-v` may go after the subcommand (`xewe test -v`).
@@ -25,12 +25,13 @@ From the project root, after `./setup.sh`, always as `build/.venv/bin/python -m 
   if a board is plugged in; `test` still compiles, `flash`/`run`/`serial` exit 4.
 - Do not pass `--require-board` or `--erase`, or flash a board, unless the user asks.
 - Never run arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`: the tools use an
-  isolated environment under `build/`.
+  isolated toolchain in `~/.xewe-os/build-tools/` (shared by all projects; `XEWE_HOME` overrides
+  `~/.xewe-os`). Never delete it as a fix; `xewe clean` never touches it.
 - `--define` string values carry their own quotes: `--define 'PROJECT_URL="https://..."'`.
 
 ## Never commit
 
-`build/`, `src/modules/` (with `Modules.h` and `modules.lock`), venvs, editor files. The repo
+`build/`, `src/Modules.h`, venvs, editor files. The repo
 holds only `xewe-os.ino`, `Config.h`, `xewe.lock`, the scripts, docs and
 `static/firmware/releases/` (written by `xewe release`).
 
@@ -39,8 +40,8 @@ holds only `xewe-os.ino`, `Config.h`, `xewe.lock`, the scripts, docs and
 - The sketch includes `<XeWeCore.h>` (the umbrella). Including only `XeWeCore/<Part>.h` does not
   build: arduino-cli discovers libraries from top-level headers only.
 - `Config.h` includes `<XeWeBuildInfo.h>` unconditionally. Never wrap it in `__has_include`.
-- `XeWeOs os({...})` is declared before any module; `src/modules/Modules.h` is included after it.
+- `XeWeOs os({...})` is declared before any module; `src/Modules.h` is included after it.
 - Modules live in the modules repo (its `CONTRACT.md` and `AGENTS.md`): constructor Os parameter
   named `host` (member stays `os`), handlers capture `[this]` only, never write `cli(` (macro).
-- Never edit `src/modules/` or `build/` by hand; they are regenerated.
+- Never edit `src/Modules.h` or `build/` by hand; they are regenerated.
 - The version is `[project] version` in `xewe.lock`, never a literal in code.
