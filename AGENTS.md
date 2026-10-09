@@ -13,11 +13,16 @@ From the project root, after `./setup.sh`, always as `build/.venv/bin/python -m 
   (works before the toolchain is installed once `build/.venv` exists; in a fresh project run
   `./setup.sh` first).
 - Build and test: `xewe build [--chip C | --all-chips]`, `xewe test [--host-only] [--module SLUG]`.
+  `-v` may go after the subcommand (`xewe test -v`).
 - Modules: `xewe modules list`, `xewe modules validate [PATH]`, `xewe modules select LIST|all|none`
   (edits `xewe.lock`: only when asked). Zero modules is a valid project.
+- Libraries a module needs come from `libraries.toml` in the modules repo, installed by `./setup.sh`;
+  a `[libraries]` pin in `xewe.lock` wins over it.
 - Also safe: `xewe doctor`, `xewe lock show`, `xewe boards --no-probe`.
 - No board is normal (D22): `flash`, `run` and `test` exit 0 with
   `compiled, not run: no board attached (...)`; grep for that, it is not an error.
+- Compile-only session: `export XEWE_NO_BOARD=1` first. No port is listed, probed or opened even
+  if a board is plugged in; `test` still compiles, `flash`/`run`/`serial` exit 4.
 - Do not pass `--require-board` or `--erase`, or flash a board, unless the user asks.
 - Never run arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`: the tools use an
   isolated environment under `build/`.
