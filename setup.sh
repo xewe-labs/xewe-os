@@ -2,7 +2,6 @@
 # setup.sh: install everything this project needs (toolchain once per machine, the rest in build/).
 # Usage: ./setup.sh [--modules LIST|all|none] [--arduino-data DIR] ...   (all flags: `xewe setup --help`)
 # Identical to xewe-os-tools scripts/bootstrap.sh except for these three comment lines.
-#
 # Installs xewe-os-tools into build/tools/.venv, then runs `xewe setup "$@"`. Everything else
 # (arduino-cli, esp32 core, esptool and the modules repo once per machine in ~/.xewe-os/build-tools;
 # libraries and the generated modules library in build/) is done by `xewe setup`.
@@ -86,6 +85,10 @@ MARK="${VENV}/xewe-tools-commit"
 COMMIT="$(git -C "${SRC}" rev-parse HEAD 2>/dev/null || echo -)"
 HAVE="$("${VPY}" -m xewe --version 2>/dev/null || true)"
 if [[ ${LOCAL} -eq 1 || -z "${HAVE}" || ! -f "${MARK}" || "$(cat "${MARK}")" != "${COMMIT}" ]]; then
+  if [[ ${LOCAL} -eq 1 ]]; then
+    # setuptools builds inside the source tree: a stale build/ or egg-info would ship deleted modules
+    rm -rf "${SRC}/build" "${SRC}"/*.egg-info
+  fi
   "${VPY}" -m pip install --quiet --upgrade "${SRC}" || die "cannot install xewe-os-tools from ${SRC}"
   echo "${COMMIT}" > "${MARK}"
 fi

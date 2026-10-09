@@ -31,7 +31,8 @@ DIR` (or `XEWE_ARDUINO_DATA=DIR`; `DIR` holds `packages/esp32/`). Nothing in `~/
 
 Change modules later with `./setup.sh --modules LIST` or `build/tools/.venv/bin/python -m xewe modules
 select LIST|all|none`; `... modules list` shows what exists (`*` = selected). The menu only appears
-when nothing is selected yet. Zero modules is a valid firmware. Arduino libraries a module needs
+when nothing is selected yet. The template ships no selection (`selected = []`): each project picks its
+modules at first setup and commits its own `xewe.toml`. Zero modules is a valid firmware. Arduino libraries a module needs
 come from the modules repo's `libraries.toml` catalogue; a `[libraries]` pin in your `xewe.toml` wins.
 
 Run commands as `build/tools/.venv/bin/python -m xewe <command>` or `./run.sh`, not the bare `xewe`
@@ -53,7 +54,7 @@ board plugged in. Firmware lands in `build/builds/<chip>/out/`: `<version>-<chip
 
 ## Committed vs generated
 
-Committed: `xewe-os.ino`, `Config.h`, `xewe.toml`, `setup.sh`, `run.sh`, docs and
+Committed: `xewe-os.ino`, `Config.h`, `xewe.toml`, `src/YourModule/`, `src/YourModuleFull/`, `setup.sh`, `run.sh`, docs and
 `static/firmware/releases/` (written by `xewe release`). Generated, ignored, safe to delete:
 `build/` and `src/Modules.h`. The shared toolchain in `~/.xewe-os/build-tools/` is outside the
 project; deleting it only means the next setup downloads it again. No submodules.
@@ -70,10 +71,21 @@ carry their own quotes:
 
 ## Your own module
 
-`src/YourModule/` is your starting point: a complete project-local module (two commands, one
-NVS value, one setting) declared in `xewe-os.ino` after the generated modules. It is yours; setup
-never touches it. Rename the folder, the class and the id `your_module`, or delete the folder and
-its two lines in `xewe-os.ino`. Plain code can also go in `setup()`/`loop()` of `xewe-os.ino`.
+Two project-local examples, declared in `xewe-os.ino` after the generated modules. They are yours;
+setup never touches them.
+
+- `src/YourModule/` (`$your_module`): the smallest complete module (two commands, one NVS value, one
+  setting). Copy this one for a simple module.
+- `src/YourModuleFull/` (`$your_mod_full`; ids are NVS namespaces, at most 15 characters): the full
+  tour. It overrides every `xewe::Module` hook (all four `begin_routines_*`, `loop`, `enable`,
+  `disable`, `reset`, `status`) and shows a config struct, a bounded init-setup prompt, FlexData
+  settings with a `schema` field (a foreign blob is never overwritten), an `AsyncTimer` in `loop`,
+  `validate<>` for an int, a bool and a string, one command name with two arg counts,
+  `os.report_error` and a listener the sketch sets. Copy it when you need those pieces, then delete
+  what you do not use.
+
+Rename the folder, the class and the id, or delete a folder and its lines in `xewe-os.ino`. Plain
+code can also go in `setup()`/`loop()` of `xewe-os.ino`.
 
 Flash it, open the console and try:
 

@@ -7,7 +7,8 @@
 // - Your own settings and defaults: Config.h.
 // - Modules: never edit src/Modules.h by hand; ./setup.sh generates it (modules live in build/modules/).
 // - Your own code: setup()/loop() below, after os.begin() / os.loop().
-// - Your own module: src/YourModule/ (project-local; setup never touches it).
+// - Your own module: src/YourModule/ (minimal) or src/YourModuleFull/ (every hook; project-local,
+//   setup never touches them).
 
 #include <XeWeCore.h>
 
@@ -32,7 +33,15 @@ XeWeOs os({
 #include "src/YourModule/YourModule.h"
 YourModule your_module(os);
 
+// src/YourModuleFull/ is the full tour of xewe::Module (every hook, commented; id your_mod_full):
+// copy what you need, delete what you do not need (or the folder, these two lines and the
+// on_level_change() call in setup()).
+#include "src/YourModuleFull/YourModuleFull.h"
+YourModuleFull your_module_full(os);
+
 void setup() {
+    // A listener: the sketch reacts to a module without the module knowing the sketch.
+    your_module_full.on_level_change([](uint16_t level) { os.serial.printf("sketch: level is now %u", level); });
     os.begin();
 }
 
