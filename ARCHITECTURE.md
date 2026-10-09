@@ -194,9 +194,9 @@ The tools never read or write `~/.arduino15` or `~/Arduino`.
 | `xewe-os-tools` | `pyproject.toml` | `vX.Y.Z` | tag |
 | `xewe-os` | `xewe.toml [project] version`, independent | `vX.Y.Z` (optional) | `xewe release`, binaries committed under `static/firmware/releases/` |
 
-The template pins, in `xewe.toml`: core `2.0.1`, modules `v0.2.0`, tools `v0.1.1`, ArduinoJson
-`v7.4.3`; the template itself is `2.0.0`. A new core or modules release reaches a project only when
-its manifest moves (`xewe manifest update`).
+Development mode: refs are `latest`; v3 tags will freeze them. The template's `xewe.toml` has core,
+modules and tools at `latest` and ArduinoJson at `v7.4.3`; the template itself is `2.0.0`. Once tagged,
+a new core or modules release reaches a project only when its manifest moves (`xewe manifest update`).
 
 ## 7. Decisions log
 
