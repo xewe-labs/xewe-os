@@ -11,6 +11,8 @@ Why it is shaped this way: [ARCHITECTURE.md](ARCHITECTURE.md) covers the four re
 boundaries, the one `<XeWeCore.h>` include, the module contract, the tools, the version policy and
 the decisions log.
 
+Naming rules for every repo: [`NAMING.md`](NAMING.md) (checked by the tools' `scripts/brand-lint.sh`).
+
 ## First five minutes
 
 ```sh
