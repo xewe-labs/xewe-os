@@ -1,5 +1,5 @@
 # ci.yml: build + host tests on every push and pull request; release on a version tag.
-# The logic lives in xewe-os-tools (.github/workflows/, ci/README.md); this file only calls it.
+# The logic lives in xewe-os-tools (.github/workflows/, doc/ci.md); this file only calls it.
 name: ci
 on:
   push:

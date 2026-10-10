@@ -2,8 +2,10 @@
 build/
 # src/Modules.h: includes and declares the selected modules (written by xewe modules generate).
 src/Modules.h
+# run.sh: written by ./setup.sh on every run.
+/run.sh
 
-# Credentials and settings for xewe provision/test (see .env.example in xewe-os-tools).
+# Credentials and settings for xewe provision/test; ./setup.sh writes a commented skeleton.
 .env
 
 # static/firmware/releases/ IS committed (release artefacts for the web flasher).
@@ -15,5 +17,6 @@ src/Modules.h
 *.swp
 *~
 
-# Python bytecode written by xewe test / pytest
+# Python bytecode and lint cache written by xewe test / pytest / ruff
 __pycache__/
+.ruff_cache/
