@@ -22,7 +22,7 @@ YourModuleFull::YourModuleFull(xewe::Os& host, YourModuleFullConfig config)
     register_commands();
 }
 
-// The settings table (core 2.1): one row per plain setting, checked at compile time (key <= 15
+// The settings table: one row per plain setting, checked at compile time (key <= 15
 // chars, default inside [min, max]). The core loads it at begin (default, then NVS), adds
 // `$your_mod_full set|get|schema`, one status line per row and the rows of `$system schema`.
 xewe::Settings YourModuleFull::settings() const {
