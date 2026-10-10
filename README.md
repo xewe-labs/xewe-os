@@ -75,15 +75,18 @@ carry their own quotes:
 Two project-local examples, declared in `xewe-os.ino` after the generated modules. They are yours;
 setup never touches them.
 
-- `src/YourModule/` (`$your_module`): the smallest complete module (two commands, one NVS value, one
-  setting). Copy this one for a simple module.
+- `src/YourModule/` (`$your_module`): the smallest complete module: a two-row settings table
+  (`number`, `beat_s`; core 2.1 gives it `set`/`get`/`schema` and the status lines), one command of
+  its own (`show`) and one compile-time setting. Copy this one for a simple module.
 - `src/YourModuleFull/` (`$your_mod_full`; ids are NVS namespaces, at most 15 characters): the full
   tour. It overrides every `xewe::Module` hook (all four `begin_routines_*`, `loop`, `enable`,
-  `disable`, `reset`, `status`) and shows a config struct, a bounded init-setup prompt, FlexData
-  settings with a `schema` field (a foreign blob is never overwritten), an `AsyncTimer` in `loop`,
-  `validate<>` for an int, a bool and a string, one command name with two arg counts,
-  `os.report_error` and a listener the sketch sets. Copy it when you need those pieces, then delete
-  what you do not use.
+  `disable`, `reset`, `status`) and shows a config struct, a bounded init-setup prompt, a settings
+  table with a `SECRET` row (`token`, never printed) and a `RESTART` row (`pin`), `on_setting_changed`,
+  a FlexData blob with a `schema` field checked with `has()` (a foreign blob is never overwritten)
+  reported through `schema_extra` (presets, with a `"set"` hint), a GPIO claimed in the core pin
+  registry, an `AsyncTimer` in `loop`, `validate<>`, one command name with two arg counts,
+  `os.report_error` and a `xewe::ListenerSet` the sketch subscribes to (with the `origin` rule).
+  Copy it when you need those pieces, then delete what you do not use. Both need XeWeCore 2.1.
 
 Rename the folder, the class and the id, or delete a folder and its lines in `xewe-os.ino`. Plain
 code can also go in `setup()`/`loop()` of `xewe-os.ino`.
@@ -91,9 +94,11 @@ code can also go in `setup()`/`loop()` of `xewe-os.ino`.
 Flash it, open the console and try:
 
 ```
-$help your_module           # its commands: set, show, status, reset, enable, disable
-$your_module set 42         # validated (0-1000) and saved to NVS
-$your_module show           # 42, also after $system restart
+$help your_module           # its commands: set, get, schema, show, status, reset, enable, disable
+$your_module set number 42  # validated (0-1000) and saved to NVS: number=42
+$your_module show           # 42, also after $system restart (or: $your_module get number)
+$your_module schema         # one JSON line per setting, then {"end":"your_module","count":2}
+$your_mod_full set token abc  # token=******** (SECRET: never printed)
 $system status              # your module has a row in the table
 $your_module disable        # asks first; wipes its NVS, disables it and restarts
 ```

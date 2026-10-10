@@ -34,14 +34,18 @@ XeWeOs os({
 YourModule your_module(os);
 
 // src/YourModuleFull/ is the full tour of xewe::Module (every hook, commented; id your_mod_full):
-// copy what you need, delete what you do not need (or the folder, these two lines and the
-// on_level_change() call in setup()).
+// copy what you need, delete what you do not need (or the folder, these lines and the
+// listeners.add() call in setup()).
 #include "src/YourModuleFull/YourModuleFull.h"
 YourModuleFull your_module_full(os);
 
+// A listener: the sketch reacts to a module without the module knowing the sketch.
+struct SketchLevelListener : LevelListener {
+    void on_level(uint16_t level, const void*) override { os.serial.printf("sketch: level is now %u", level); }
+} sketch_level_listener;
+
 void setup() {
-    // A listener: the sketch reacts to a module without the module knowing the sketch.
-    your_module_full.on_level_change([](uint16_t level) { os.serial.printf("sketch: level is now %u", level); });
+    your_module_full.listeners.add(&sketch_level_listener);
     os.begin();
 }
 

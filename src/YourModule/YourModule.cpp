@@ -5,7 +5,7 @@
 // Project-local module: rename or delete this folder; it is yours, setup never touches it.
 // `$your_module disable` asks "OK?" (two tries, 15 s each; no clear yes = cancelled). On yes it
 // wipes the module's NVS namespace, marks it disabled and restarts; while disabled loop() does
-// not run and `$your_module set` refuses. `$your_module enable` brings it back.
+// not run and set_number() refuses. `$your_module enable` brings it back.
 #include "YourModule.h"
 
 YourModule::YourModule(xewe::Os& host, YourModuleConfig config)
@@ -17,42 +17,37 @@ YourModule::YourModule(xewe::Os& host, YourModuleConfig config)
           /* can_be_disabled     */ true,          // adds $your_module enable / disable
           /* has_cli_commands    */ true)          // adds $your_module status / reset, allows our own
     , config(config) {
-    // $your_module set <n>: one argument; the Cli checks the count and prints the usage line otherwise.
-    register_command({"set", "Store a number (0-1000) in NVS", "$your_module set 42", 1,
-        [this](xewe::span<const std::string> args) {
-            // validate<T>(text, min, max) parses and range-checks; empty optional on bad input
-            if (auto n = xewe::validate<uint16_t>(args[0], 0, 1000)) set_number(*n);
-            else os.serial.print("Usage: $your_module set <0-1000>");
-        }});
-
-    // $your_module show: no arguments.
+    // `$your_module set number 42` / `get number` / `schema` come from the table below.
+    // $your_module show: our own command, no arguments; the Cli checks the count.
     register_command({"show", "Print the stored number", "$your_module show", 0,
         [this](xewe::span<const std::string>) {
             os.serial.printf("number = %u", number);
         }});
 }
 
-void YourModule::begin_routines_common() {
-    // NVS namespace == module id; the third argument is the value when nothing is stored yet
-    number = os.nvs.read<uint16_t>(id, "number", 0);
+xewe::Settings YourModule::settings() const {
+    // one row per setting: key (= NVS key, <= 15 chars), min, max, default, doc; checked at build time
+    static constexpr xewe::SettingDef table[] = {
+        xewe::setting<&YourModule::number>("number", 0, 1000, 0, "The remembered number"),
+        xewe::setting<&YourModule::beat_s>("beat_s", 1, 3600, 10, "Heartbeat period, s"),
+    };
+    return {table, this};
 }
 
 void YourModule::loop() {
-    if (!config.heartbeat || millis() - last_beat_ms < 10000) return;   // non-blocking timer
+    if (!config.heartbeat || millis() - last_beat_ms < beat_s * 1000UL) return;   // non-blocking timer
     last_beat_ms = millis();
     os.serial.printf("your_module: number is %u", number);
 }
 
 std::string YourModule::status(const bool verbose) const {
-    // compose, don't replace: keep the base line (enabled, ...) and add our own state
-    std::string s = Module::status(false) + ", number " + std::to_string(number);
+    // compose, don't replace: the base prints "enabled" and one `key: value` line per table row
+    std::string s = Module::status(false);
     if (verbose) os.serial.print(s);
     return s;
 }
 
 void YourModule::set_number(uint16_t value) {
     if (is_disabled(true)) return;      // disabled modules stay callable; refuse politely
-    number = value;
-    os.nvs.write<uint16_t>(id, "number", number);   // survives reboots until disable/reset
-    os.serial.printf("number = %u (saved)", number);
+    apply_setting("number", std::to_string(value), true);   // validated (0-1000), saved, printed
 }
