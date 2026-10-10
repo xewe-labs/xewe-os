@@ -68,7 +68,8 @@ project on the machine:
 
 my-fw/
 ├── xewe-os.ino              committed   #include <XeWeCore.h>; XeWeOs os({...}); your setup()/loop()
-├── Config.h                 committed   your defaults; includes the generated <XeWeBuildInfo.h>
+├── Config.h                 committed   your defaults plus one appended block of compile-time values per
+│                                        selected module (setup adds it once; you edit it); includes <XeWeBuildInfo.h>
 ├── xewe.toml                committed   the manifest: [project] [core] [modules] [tools] [libraries]
 ├── setup.sh  run.sh         committed   bootstrap build/tools/.venv, then call `python -m xewe`
 │                            run.sh is what `xewe setup` generates ("do not edit" header)
