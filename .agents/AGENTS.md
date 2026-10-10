@@ -48,7 +48,7 @@ in that order. Read it as described below before doing anything else in the repo
 ## Project: xewe-os
 
 The firmware template of XeWe OS: a sketch, `Config.h`, `xewe.toml`, two project-local example
-modules and two bootstrap scripts. Everything else (tools, XeWeCore, modules, libraries) is fetched
+modules and one bootstrap script. Everything else (tools, XeWeCore, modules, libraries) is fetched
 into `build/` by `./setup.sh`. Human documentation: `README.md` (use), `doc/architecture.md` (why, the
 decisions log), `doc/naming.md`. Project rules are X-01 … X-10 at the end of `RULES.md`. Organization
 rules: `https://github.com/xewe-labs/.github` (`AGENTS.md` and `guidelines/`); they apply where this
