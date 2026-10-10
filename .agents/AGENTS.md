@@ -49,8 +49,8 @@ in that order. Read it as described below before doing anything else in the repo
 
 The firmware template of XeWe OS: a sketch, `Config.h`, `xewe.toml`, two project-local example
 modules and two bootstrap scripts. Everything else (tools, XeWeCore, modules, libraries) is fetched
-into `build/` by `./setup.sh`. Human documentation: `README.md` (use), `ARCHITECTURE.md` (why, the
-decisions log), `NAMING.md`. Project rules are X-01 … X-10 at the end of `RULES.md`. Organization
+into `build/` by `./setup.sh`. Human documentation: `README.md` (use), `doc/architecture.md` (why, the
+decisions log), `doc/naming.md`. Project rules are X-01 … X-10 at the end of `RULES.md`. Organization
 rules: `https://github.com/xewe-labs/.github` (`AGENTS.md` and `guidelines/`); they apply where this
 folder is silent.
 
@@ -123,5 +123,5 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
   `xewe::Module` API to a reader, and they must keep compiling against the current core. When the
   core's module API changes, update them and the README's console walk-through together.
 - Module code rules (constructor parameter `host`, `[this]` captures, never `cli(`, ids ≤ 15
-  characters) are in the modules repository's `CONTRACT.md` and `.agents/RULES.md`; they apply to
+  characters) are in the modules repository's `doc/contract.md` and `.agents/RULES.md`; they apply to
   project-local modules too.
