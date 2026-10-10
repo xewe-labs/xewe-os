@@ -24,7 +24,7 @@ public:
     //   begin_routines_init()      first boot only, until it completes (needs requires_init_setup)
     //   begin_routines_regular()   every boot after init has completed
     //   begin_routines_common()    every boot, last
-    // This module needs none: the core loads the settings table before them (step 0).
+    // This module needs none: the core loads the settings table before any of them.
 
     // loop: called from os.loop() while the module is enabled. Must never block.
     void        loop()                                      override;
@@ -32,7 +32,7 @@ public:
     // status: used by `$your_module status` and by the `$system status` table.
     std::string status(const bool verbose = false)    const override;
 
-    // Run-time settings (core 2.1): the table in YourModule.cpp. The core loads it at begin (default,
+    // Run-time settings: the table in YourModule.cpp. The core loads it at begin (default,
     // then NVS) and adds `$your_module set|get|schema`, one status line per row, `$system schema`.
     xewe::Settings settings()                         const override;
 
