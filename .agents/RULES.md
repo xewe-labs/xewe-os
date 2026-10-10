@@ -72,16 +72,16 @@ as `X-NN`. They are not part of the WAX reference. They summarise the organizati
 `https://github.com/xewe-labs/.github/tree/main/guidelines`, which are the source; where the two
 differ, the guidelines win and this list is corrected.
 
-- **X-01 Never commit generated files.** `build/` and `src/Modules.h` are never committed, nor
-  venvs, caches or editor files. The repository holds `xewe-os.ino`, `Config.h`, `xewe.toml`,
-  `src/YourModule/`, `src/YourModuleFull/`, `setup.sh`, `run.sh`, the docs, `.agents/` and
-  `static/firmware/releases/` (written by `xewe release`). (guidelines/repositories.md)
+- **X-01 Never commit generated files.** `build/`, `src/Modules.h` and `run.sh` are never
+  committed, nor venvs, caches or editor files. The repository holds `xewe-os.ino`, `Config.h`,
+  `xewe.toml`, `src/YourModule/`, `src/YourModuleFull/`, `setup.sh`, `README.md`, `doc/`,
+  `.agents/` and `static/firmware/releases/` (written by `xewe release`).
+  (guidelines/repositories.md)
 - **X-02 Never edit generated files.** `build/**`, `src/Modules.h`, `<XeWeBuildInfo.h>` and
   `build_config.toml` are rewritten by the tools; change their source and regenerate.
-- **X-03 `setup.sh` is the tools' script.** `setup.sh` is identical to `xewe-os-tools`
-  `scripts/setup.sh` except its three header comment lines (name and purpose, usage, the
-  "identical except" note); `run.sh` is identical to `scripts/run.sh`. A change goes to the tools
-  first and is copied here.
+- **X-03 `setup.sh` bootstraps the tools.** `setup.sh` is the template's file: it installs
+  `xewe-os-tools` into `build/tools/.venv` and runs `xewe setup`. `xewe setup` writes `run.sh` on
+  every run; `run.sh` is never edited by hand and never committed.
 - **X-04 The template ships no selection.** `xewe.toml` keeps `[modules] selected = []`: each
   project chooses its modules at first setup and commits that choice. Only `xewe modules select`,
   `setup --modules`, the first-setup menu, `manifest update` and `release` write `xewe.toml`, and
@@ -98,6 +98,6 @@ differ, the guidelines win and this list is corrected.
   references, in code, scripts, `xewe.toml` or the docs. History lives in the xewe-labs `docs/`.
   Source files keep their SPDX and path header lines (guidelines/license-header.txt).
 - **X-09 Docs are part of the change.** A change to the first-boot flow, the commands, the layout
-  or the examples updates `README.md` (and `ARCHITECTURE.md` when it changes a decision) in the
+  or the examples updates `README.md` (and `doc/architecture.md` when it changes a decision) in the
   same change.
 - **X-10 Credentials.** Never open, print or copy a dotenv or key file; the tools read them.
