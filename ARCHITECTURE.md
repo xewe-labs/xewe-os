@@ -71,6 +71,8 @@ my-fw/
 ├── Config.h                 committed   your defaults; includes the generated <XeWeBuildInfo.h>
 ├── xewe.toml                committed   the manifest: [project] [core] [modules] [tools] [libraries]
 ├── setup.sh  run.sh         committed   bootstrap build/tools/.venv, then call `python -m xewe`
+│                            run.sh is what `xewe setup` generates ("do not edit" header)
+├── .clang-format            committed   C++ style for `xewe format` (no column alignment)
 ├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules
 ├── static/firmware/releases/  committed  written by `xewe release`
 ├── src/Modules.h            generated   #include <XeWeModules.h> + the declare lines
@@ -204,7 +206,7 @@ The tools never read or write `~/.arduino15` or `~/Arduino`.
 
 **Refs: `latest` until v3.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or `latest`, the
 newest commit of the repository's default branch. The template ships core, modules and tools at
-`latest` and ArduinoJson at `v7.4.3`; the template itself is `2.0.0`. Every repository is tagged
+`latest` and ArduinoJson at `v7.4.3`; the template itself is `2.1.0`. Every repository is tagged
 `v3.0.0` together, as one ecosystem generation; from then on a project freezes its refs with
 `xewe manifest update` (newest tag), and a new core or modules release reaches a project only when
 its manifest moves.
