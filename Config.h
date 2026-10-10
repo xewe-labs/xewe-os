@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // xewe-os/Config.h
 //
-// Build settings. `xewe build` generates <XeWeBuildInfo.h> (PROJECT_NAME, BUILD_VERSION,
-// BUILD_TIMESTAMP, BUILD_CHIP and every `--define KEY=VALUE`); it wins over the defaults below.
-// The version lives in xewe.toml [project]; do not edit it here.
+// Build settings and the modules' compile-time values. `xewe build` generates <XeWeBuildInfo.h>
+// (PROJECT_NAME, BUILD_VERSION, BUILD_TIMESTAMP, BUILD_CHIP, XEWE_CHIP_<C3|C6|S3> and every
+// `--define KEY=VALUE`); it wins over the defaults below. The version lives in xewe.toml [project];
+// do not edit it here.
 #pragma once
 
 // Unconditional on purpose: arduino-cli only adds a library to the build when an #include of it
@@ -37,3 +38,9 @@
 #ifndef SERIAL_BAUD_RATE
 #define SERIAL_BAUD_RATE 115200
 #endif
+
+// Module values. `./setup.sh` and `xewe modules select` append the compile-time values of every
+// selected module below, one marked block per module (`// ---- <slug> (xewe modules generate) ----`
+// to `// ---- end <slug> ----`). Edit the numbers; keep the markers. A block is added once and
+// never rewritten. `xewe build` passes this file to every translation unit, so the module sources
+// see your values.
