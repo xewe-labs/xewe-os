@@ -5,7 +5,7 @@ src/Modules.h
 # run.sh: written by ./setup.sh on every run.
 /run.sh
 
-# Credentials and settings for xewe provision/test; ./setup.sh writes a commented skeleton.
+# Credentials and settings for xewe provision/test; yours to create (the tools README lists the keys).
 .env
 
 # static/firmware/releases/ IS committed (release artefacts for the web flasher).

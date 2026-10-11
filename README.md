@@ -103,7 +103,7 @@ and `tests/unit/` (on the developer machine: `@pytest.mark.unit` Python, or C++ 
 |---|---|
 | Committed | `xewe-os.ino`, `Config.h` (your settings; `./setup.sh` appends one marked block of compile-time values per selected module, which you edit in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/firmware/releases/` (written by `xewe release`), `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
 | Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again) |
-| Ignored, yours | `.env`: the credentials `xewe provision` reads; `./setup.sh` writes a commented skeleton when there is none |
+| Ignored, yours | `.env`: the credentials `xewe provision` reads, optional; you create it here or in the tools checkout (`./setup.sh` says where and which keys when there is none, and never writes one) |
 | Shared, outside the project | `~/.xewe-os/build-tools/`: deleting it only means the next setup downloads it again |
 
 No submodules. The full `build/` tree is in [doc/architecture.md](doc/architecture.md#build-layout).
