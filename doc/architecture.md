@@ -81,7 +81,7 @@ my-fw/
 ├── static/firmware/releases/  committed  written by `xewe release`
 ├── README.md  LICENSE.txt  doc/  .agents/  .github/workflows/ci.yml   committed
 ├── run.sh                   generated   written by every ./setup.sh; calls `xewe run`
-├── .env                     local       credentials for `xewe provision`; setup writes a commented skeleton
+├── .env                     local       credentials for `xewe provision`; optional, yours (setup never writes it)
 ├── src/Modules.h            generated   #include <XeWeModules.h> + the declare lines
 └── build/                   generated   build/.gitignore is `*`
     ├── builds/<chip>/
