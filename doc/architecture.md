@@ -31,7 +31,7 @@ with arduino-cli (D5).
 | Repo | Job | Boundary |
 |---|---|---|
 | [`xewe-os`](https://github.com/xewe-labs/xewe-os) | the firmware template users clone | its own code, `xewe.toml`, `setup.sh` and released firmware; `run.sh` is generated |
-| [`xewe-os-core`](https://github.com/xewe-labs/xewe-os-core) | `XeWeCore`, the one Arduino library | reusable code every firmware needs; publishable on its own; depends only on ArduinoJson. Its `setup.sh` writes a `run.sh` that runs the host unit tests and compiles every example (`doc/tests.md`) |
+| [`xewe-os-core`](https://github.com/xewe-labs/xewe-os-core) | `XeWeCore`, the one Arduino library | reusable code every firmware needs; publishable on its own; depends only on ArduinoJson |
 | [`xewe-os-modules`](https://github.com/xewe-labs/xewe-os-modules) | every module, `modules/<slug>/` | features some firmware needs; the contract in `doc/contract.md`, the index in `doc/modules.md`; no toolchain of its own; built and tested through an `xewe-os` checkout (D21) |
 | [`xewe-os-tools`](https://github.com/xewe-labs/xewe-os-tools) | `xewe`, one Python package (`src/xewe/`) | everything that runs on the host: setup, build, flash, serial, test, release, format (the one C++ style file ships inside the package), brand-lint. The spec is `doc/spec.md` |
 
@@ -178,7 +178,6 @@ Every command and flag is in the tools' `doc/spec.md`; the main ones:
 | `provision` | answers the first-boot prompts of a flashed board (name, modules, Wi-Fi, timezone) |
 | `release --version X.Y.Z` | release matrix into `static/firmware/releases/`; prints git/gh commands |
 | `format [--check]`, `brand-lint [DIR...]` | C++ in the XeWe style shipped with the tools (no column alignment); banned brand spellings ([naming.md](naming.md)) |
-| `check [--examples] [--unit]` | library mode, for the core: host unit tests and every example |
 
 **`xewe.toml`** is the project's manifest, its whole dependency state: `[project]` (name, version,
 chip), `[core]`, `[modules]` (with `selected`) and `[tools]` (repo + ref each) and `[libraries]`
