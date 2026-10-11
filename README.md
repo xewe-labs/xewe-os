@@ -126,11 +126,11 @@ carry their own quotes:
 
 The modules' compile-time values (a LED data pin, a buffer size, listener slots) live in `Config.h`
 too: `./setup.sh` and `xewe modules select` append one marked block per selected module
-(`// ---- led (xewe modules generate) ----` … `// ---- end led ----`) the first time the module is
+(`// ---- wifi (xewe modules generate) ----` … `// ---- end wifi ----`) the first time the module is
 selected, and never touch it again. Edit the numbers, keep the markers. `xewe build` passes
 `Config.h` to every translation unit, so the module sources see your values; a `--define` of the
-same name still wins. First-boot defaults that a module stores in NVS (a strip length, a fan's
-pins) are not in `Config.h`; each module README lists its `--define` names.
+same name still wins. First-boot defaults that a module stores in NVS (a strip length, a
+sensor address) are not in `Config.h`; each module README lists its `--define` names.
 
 ## Your own module
 
