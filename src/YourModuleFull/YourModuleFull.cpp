@@ -36,7 +36,7 @@ xewe::Settings YourModuleFull::settings() const {
     return {table, this};
 }
 
-// Values that are not table rows still appear in the schema, with a "set" hint (like led's modes).
+// Values that are not table rows still appear in the schema, with a "set" hint (like the scheduler's blocks).
 void YourModuleFull::schema_extra(xewe::SchemaOut& out) const {
     for (size_t i = 0; i < presets.levels.size(); ++i) {
         out.row("\"key\":\"level\",\"group\":\"preset:" + std::to_string(i) + "\",\"type\":\"u16\",\"min\":0,"
