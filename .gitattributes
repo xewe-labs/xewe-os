@@ -1,0 +1,5 @@
+static/**/*.bin     filter=lfs diff=lfs merge=lfs -text
+static/**/*.png     filter=lfs diff=lfs merge=lfs -text
+static/**/*.webp    filter=lfs diff=lfs merge=lfs -text
+static/**/*.mp4     filter=lfs diff=lfs merge=lfs -text
+static/**/*.numbers filter=lfs diff=lfs merge=lfs -text

@@ -69,6 +69,12 @@ script breaks when the project folder is moved; re-run `./setup.sh` then.
 | Modules | `xewe modules list`, `xewe modules validate [PATH]`; `xewe modules select LIST\|all\|none` only when asked (it edits `xewe.toml`) |
 | Look around | `xewe doctor`, `xewe manifest show`, `xewe boards --no-probe` |
 | Build, erase, flash, listen | `./run.sh` (= `xewe run`; `--keep-nvs` keeps the stored settings) — only when asked |
+| Release (only when asked; the maintainer runs it) | `scripts/release.sh X.Y.Z --dry-run`; `--prepare X.Y.Z` sets the version and creates `releases/X.Y.Z/` |
+
+Refs are frozen at tags (core `3.0.0`, modules `3.0.0`, tools `3.0.1`); `ci.yml` calls the tools
+workflows at the `[tools] ref` tag. Tags are `X.Y.Z` with no `v`. A tag makes CI build c3, c6 and
+s3, publish a GitHub Release and commit `static/firmware/releases/X.Y.Z/` to `main` (`.bin` in Git
+LFS); never write that folder by hand.
 
 `-v` may go after the subcommand (`xewe test -v`). `--define` string values carry their own quotes:
 `--define 'PROJECT_URL="https://..."'`.

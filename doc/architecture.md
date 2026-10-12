@@ -176,7 +176,7 @@ Every command and flag is in the tools' `doc/spec.md`; the main ones:
 | `boards`, `doctor`, `clean` | board discovery; environment check; delete generated output |
 | `modules list\|select\|validate\|generate`, `manifest show\|update` | modules and refs |
 | `provision` | answers the first-boot prompts of a flashed board (name, modules, Wi-Fi, timezone) |
-| `release --version X.Y.Z` | release matrix into `static/firmware/releases/`; prints git/gh commands |
+| `release --version X.Y.Z` | release matrix into `static/firmware/releases/` (run by CI on a tag; see §6) |
 | `format [--check]`, `brand-lint [DIR...]` | C++ in the XeWe style shipped with the tools (no column alignment); banned brand spellings ([naming.md](naming.md)) |
 
 **`xewe.toml`** is the project's manifest, its whole dependency state: `[project]` (name, version,
@@ -210,16 +210,34 @@ elsewhere. The tools never read or write `~/.arduino15` or `~/Arduino`.
 | Repo | Version | Tag | Released by |
 |---|---|---|---|
 | `xewe-os-core` | semver in `library.properties` | `X.Y.Z` (un-prefixed, Arduino registry rule) | `publish-arduino-library` check + release |
-| `xewe-os-modules` | repo-wide | `vX.Y.Z` | tag; each module declares `requires_core`, for example `>=2.1.0,<3.0.0` |
-| `xewe-os-tools` | `pyproject.toml` | `vX.Y.Z` | tag |
-| `xewe-os` | `xewe.toml [project] version`, independent | `vX.Y.Z` (optional) | `xewe release`, binaries committed under `static/firmware/releases/` |
+| `xewe-os-modules` | per module (`module.properties`) and the set | `<module>/X.Y.Z` per module, `X.Y.Z` for the set | `scripts/release.sh`; each module declares `requires_core`, for example `>=3.0.0,<4.0.0` |
+| `xewe-os-tools` | `pyproject.toml` | `X.Y.Z` | `scripts/release.sh` |
+| `xewe-os` | `xewe.toml [project] version`, independent | `X.Y.Z` | `scripts/release.sh` tags; CI builds, publishes and commits the binaries under `static/firmware/releases/` |
 
-**Refs: `latest` until v3.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or `latest`, the
-newest commit of the repository's default branch. The template ships core, modules and tools at
-`latest` and ArduinoJson at `v7.4.3`; the template itself is `2.1.0`. Every repository is tagged
-`v3.0.0` together, as one ecosystem generation; from then on a project freezes its refs with
-`xewe manifest update` (newest tag), and a new core or modules release reaches a project only when
-its manifest moves.
+Tags carry no `v` from 3.0.0 on (older `v` tags keep their names).
+
+**Refs: frozen at 3.0.0.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or `latest`, the
+newest commit of the repository's default branch. The template pins core `3.0.0`, modules `3.0.0`,
+tools `3.0.1` and ArduinoJson `v7.4.3`; the template itself is `3.0.0`. The repositories were
+tagged 3.0.0 together, as one ecosystem generation (tools 3.0.1 adds the release commit to
+`main`); a project moves its refs with `xewe manifest update` (newest tag), and a new core or
+modules release reaches a project only when its manifest moves. `.github/workflows/ci.yml` calls
+the tools workflows at the same tag as `[tools] ref`.
+
+**Release flow.** `scripts/release.sh X.Y.Z` (after `--prepare X.Y.Z` and a pushed prepare commit)
+checks main, the version locations and CI, runs `xewe test --no-board` and a build, and pushes the
+annotated tag `X.Y.Z` with `releases/X.Y.Z/notes.txt` as its message. The tag starts `ci.yml`: the
+build job (c3, c6, s3, host tests, lint), then the release job (`xewe-release.yml`): `./setup.sh`,
+`xewe release` (the default matrix: one plain build per chip), a GitHub Release (the tag message
+plus the resolved commits as notes; the `.bin` files and `firmware-X.Y.Z.tar.gz` as assets), then
+one bot commit `release X.Y.Z (...) [skip ci]` on `main` that adds `static/firmware/releases/X.Y.Z/`
+and `index.json` and keeps the rest of the tree. The `.bin` files are stored in Git LFS
+(`.gitattributes`: `static/**/*.bin`, and png/webp/mp4/numbers). The tag does not contain its own
+binaries; `main` after the bot commit does. The script waits for that run, attaches
+`releases/X.Y.Z/testcard.md` and prints the assets and the commit. The layout is the pre-3.0
+one: `X.Y.Z/{release_notes.txt,firmware_map.csv}` and
+`X.Y.Z/<chip>/<matrix folders>/{X.Y.Z-<chip>-<name>.bin,manifest.json,meta.json,build_notes.txt}`.
+The old `binaries` branch is legacy and untouched.
 
 ## 7. Decisions log
 
@@ -237,7 +255,7 @@ unused.
 | D8 | **One library: `XeWeCore`** = utils + serial + cli + nvs + os | Avoids the `xewe-os` / `XeWeOS` name collision. ArduinoJson (header-only, the standard Arduino JSON library) is its one dependency |
 | D9 | "Core" not "Kernel" | Kernel implies scheduling/memory management, which this does not do |
 | D10 | **One tooling repo: `xewe-os-tools`** (setup + build + flash + serial + test) | Single Python package, shared port discovery and serial code |
-| D11 | Template gets dependencies via **`setup.sh` + `xewe.toml`** | One ref each for core, modules, tools (`latest` until the v3 tag set, tags after it); `--latest` tries the newest tags; nothing generated is committed; no submodules |
+| D11 | Template gets dependencies via **`setup.sh` + `xewe.toml`** | One ref each for core, modules, tools (`latest` until the 3.0.0 tag set, tags since); `--latest` tries the newest tags; nothing generated is committed; no submodules |
 | D12 | Versioning: core is semver and published; modules repo tagged as a whole, each module declares `requires_core`; template pins both in `xewe.toml` | Template version is independent |
 | D13 | Module contract keeps the explicit `declare` line in `module.properties` | An automated validator checks uniqueness of slug, id, folder and variable name instead of a human review |
 | D14 | Tests are **Python, host-driven**: flash, send CLI commands over serial, assert on output | Two layers per repo: `tests/board/` (pytest against the board) and `tests/unit/` (no board: C++ with an Arduino shim or g++, and `@pytest.mark.unit` Python). No on-device Unity tests |
@@ -250,14 +268,14 @@ unused.
 | D21 | Modules are built and tested **through a `xewe-os` checkout** as the harness | The modules repo carries no toolchain; a harness is a copy of the template with the module selected. One build path, nothing to drift |
 | D22 | **No board is a normal state.** Without a board, board tests compile only; the runner reports "compiled, not run" and exits 0 | `--require-board` makes a missing board an error; `XEWE_NO_BOARD=1` never opens a port |
 | D23 | **Agent-driven development** | Coding agents do the hands-on work; a supervising session verifies and steers; issues are resolved and logged, only critical ones interrupt the maintainer |
-| D24 | **Development mode until v3: refs are `latest`** | Manifests track `latest`; harnesses build from local working trees (`XEWE_*_SOURCE`); every repository is tagged `v3.0.0` together, with CI/CD, and refs are frozen from then on |
+| D24 | **Development mode until 3.0.0: refs were `latest`** | Manifests track `latest`; harnesses build from local working trees (`XEWE_*_SOURCE`); every repository was tagged `3.0.0` together, with CI/CD, and refs are frozen since |
 | D25 | **One repo layout** | `README.md` and `LICENSE.txt` are the only reader files at a root; pages live in `doc/`; the C++ style ships with the tools; `run.sh` is written by `setup.sh` and never committed |
 
 Open and deferred:
 
 | Item | State |
 |---|---|
-| CI strictness and release branch | each repo calls the tools' reusable workflows; in the template, lint is advisory (`strict_lint: false`) and a release publishes GitHub Releases only (`publish_branch: false`) |
+| CI strictness and release branch | settled at 3.0.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release and commits the binaries to `main` (`releases_branch: main`, Git LFS) |
 | laptop-cooling-pad migration | on hold; first real consumer once the backbone is published |
 | xewe-led-os migration | out of scope for now; after the backbone is proven |
 | Frontend builder v2 | later: prototype UIs in Flask/FastAPI under constraints that port to a web-interface module |
