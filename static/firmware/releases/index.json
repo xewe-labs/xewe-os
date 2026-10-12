@@ -1,0 +1,29 @@
+{
+  "releases": [
+    {
+      "version": "3.0.0",
+      "prerelease": false,
+      "tag": "3.0.0",
+      "builds": [
+        {
+          "chip": "c3",
+          "path": "3.0.0/c3",
+          "binary": "3.0.0-c3-xewe-os.bin",
+          "config": {}
+        },
+        {
+          "chip": "c6",
+          "path": "3.0.0/c6",
+          "binary": "3.0.0-c6-xewe-os.bin",
+          "config": {}
+        },
+        {
+          "chip": "s3",
+          "path": "3.0.0/s3",
+          "binary": "3.0.0-s3-xewe-os.bin",
+          "config": {}
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "type": "c3",
+  "chip_family": "ESP32-C3",
+  "project_name": "xewe-os",
+  "version": "3.0.0",
+  "timestamp_param": "2026-10-12T01:23:50Z",
+  "config": {},
+  "fqbn": "esp32:esp32:esp32c3:CDCOnBoot=cdc,CPUFreq=160,DebugLevel=none,EraseFlash=all,FlashMode=qio,FlashSize=4M,PartitionScheme=no_ota,UploadSpeed=921600",
+  "fqbn_extra": "",
+  "compile_time_sec": 28,
+  "artifacts": {
+    "binary_filename": "3.0.0-c3-xewe-os.bin",
+    "path_rel_binary": "xewe-os/static/firmware/releases/3.0.0/c3/3.0.0-c3-xewe-os.bin",
+    "path_rel_manifest_json": "xewe-os/static/firmware/releases/3.0.0/c3/manifest.json",
+    "path_rel_meta_json": "xewe-os/static/firmware/releases/3.0.0/c3/meta.json"
+  },
+  "tools_version": "3.0.1",
+  "arduino_cli": "1.5.1",
+  "esp32_core": "3.3.12",
+  "project_commit": "6fab804ef5d013e37effc72dc84c113bc3d0f57f",
+  "core_ref": "3.0.0",
+  "core_commit": "207c2562023649c5fb53200365c9d58e9b86dbe3",
+  "modules_ref": "3.0.0",
+  "modules_commit": "3d5e319e235891060ac6ff32a519fe3405b03e79",
+  "tools_ref": "3.0.1",
+  "tools_commit": "d90d92c7186d9aa9a081a8430289a50e9669d3eb",
+  "modules_version": "3.0.0",
+  "modules": {
+    "selected": [],
+    "resolved": []
+  },
+  "sketch_size": 386734,
+  "sketch_size_percent": 18,
+  "warnings": 0,
+  "libraries": {
+    "ArduinoJson": {
+      "ref": "v7.4.3",
+      "commit": "77771d3c07668e01d8f52acb03910c1110bb373f"
+    }
+  },
+  "release_tag": "3.0.0"
+}
