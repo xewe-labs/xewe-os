@@ -101,7 +101,7 @@ and `tests/unit/` (on the developer machine: `@pytest.mark.unit` Python, or C++ 
 
 | | Paths |
 |---|---|
-| Committed | `xewe-os.ino`, `Config.h` (your settings; `./setup.sh` appends one marked block of compile-time values per selected module, which you edit in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/firmware/releases/` (written by `xewe release`), `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
+| Committed | `xewe-os.ino`, `Config.h` (your settings; `./setup.sh` appends one marked block of compile-time values per selected module, which you edit in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/firmware/releases/` (written by CI after a release tag; `.bin` files in Git LFS, `.gitattributes`), `releases/<version>/` (release notes and test card), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
 | Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again) |
 | Ignored, yours | `.env`: the credentials `xewe provision` reads, optional; you create it here or in the tools checkout (`./setup.sh` says where and which keys when there is none, and never writes one) |
 | Shared, outside the project | `~/.xewe-os/build-tools/`: deleting it only means the next setup downloads it again |
@@ -111,10 +111,10 @@ No submodules. The full `build/` tree is in [doc/architecture.md](doc/architectu
 
 ## Versions and settings
 
-`xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries.
-A tag freezes a ref; `latest` follows the default branch; `xewe manifest update` moves the refs to
-the newest tags. The ref policy is in
-[doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
+`xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries:
+core `3.0.0`, modules `3.0.0`, tools `3.0.1`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
+follows the default branch; `xewe manifest update` moves the refs to the newest tags. The ref
+policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
 
 The firmware version is `[project] version` in `xewe.toml`; builds never change it. Your settings
 and defaults go in `Config.h`. It includes `<XeWeBuildInfo.h>`, generated per build (name,
@@ -131,6 +131,31 @@ selected, and never touch it again. Edit the numbers, keep the markers. `xewe bu
 `Config.h` to every translation unit, so the module sources see your values; a `--define` of the
 same name still wins. First-boot defaults that a module stores in NVS (a strip length, a
 sensor address) are not in `Config.h`; each module README lists its `--define` names.
+
+## Releases
+
+Tags are `X.Y.Z` with no `v`, equal to `[project] version` in `xewe.toml`. A release is
+`scripts/release.sh --prepare X.Y.Z` (sets the version, creates `releases/X.Y.Z/notes.txt` and
+`testcard.md`), a commit and push of that, then `scripts/release.sh X.Y.Z` (`--dry-run` first): it
+checks the tree and CI, runs the host tests and a build, and pushes an annotated tag whose message
+is `notes.txt`. CI does the rest (`ci.yml`, release job): it builds c3, c6 and s3, publishes a
+GitHub Release with the `.bin` files and `firmware-X.Y.Z.tar.gz`, then commits the release folder
+to `main` (a bot commit after the tag, so the tag itself does not hold its binaries). The script
+waits for that run, attaches `testcard.md` and prints the assets and the commit. Pull afterwards
+with Git LFS installed (`git lfs install`), or the `.bin` files stay pointer files.
+
+```
+static/firmware/releases/X.Y.Z/
+├── release_notes.txt              # notes.txt plus the commits it was built from
+├── firmware_map.csv               # the release matrix header (CHIP)
+└── <chip>/                        # c3, c6, s3: one plain build each
+    ├── X.Y.Z-<chip>-xewe-os.bin   # merged image, written at 0x0 (Git LFS)
+    ├── manifest.json              # ESP Web Tools manifest
+    └── meta.json                  # size, flags, resolved core/modules/tools/library commits
+```
+
+A `release_matrix.csv` at the root adds rows (a folder per column under `<chip>/`); the tools'
+`doc/spec.md` §11 has the format. The old `binaries` branch is legacy and not written any more.
 
 ## Your own module
 
