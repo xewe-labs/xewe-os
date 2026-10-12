@@ -1,12 +1,13 @@
 """Unit tests of the two project-local example modules (src/YourModule/, src/YourModuleFull/):
 source facts only, no board and no build. They have no module.properties; the sketch declares them."""
+
 import re
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]          # the project: tests/unit/ -> tests/ -> root
-EXAMPLES = {                                         # folder: (id, name, sketch variable)
+ROOT = Path(__file__).resolve().parents[2]  # the project: tests/unit/ -> tests/ -> root
+EXAMPLES = {  # folder: (id, name, sketch variable)
     "YourModule": ("your_module", "Your Module", "your_module"),
     "YourModuleFull": ("your_mod_full", "Your Module Full", "your_module_full"),
 }
@@ -25,7 +26,9 @@ def test_sketch_declares_example(folder):
     ino = (ROOT / "xewe-os.ino").read_text()
     _, _, var = EXAMPLES[folder]
     assert f'#include "src/{folder}/{folder}.h"' in ino
-    assert re.search(rf"^{folder}\s+{var}\s*\(\s*os\b", ino, re.M), f"{folder} {var}(os...) not declared"
+    assert re.search(rf"^{folder}\s+{var}\s*\(\s*os\b", ino, re.M), (
+        f"{folder} {var}(os...) not declared"
+    )
     assert (ROOT / "src" / folder / f"{folder}.h").is_file()
 
 
@@ -46,7 +49,7 @@ def test_setting_keys_fit_nvs(folder):
     keys = SETTING_KEY.findall(_cpp(folder))
     assert keys, "no settings table rows found"
     assert len(keys) == len(set(keys))
-    assert all(1 <= len(k) <= 15 for k in keys), keys       # NVS key limit
+    assert all(1 <= len(k) <= 15 for k in keys), keys  # NVS key limit
 
 
 @pytest.mark.unit
