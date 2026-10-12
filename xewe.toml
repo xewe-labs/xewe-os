@@ -5,21 +5,21 @@ schema = 1
 
 [project]
 name = "xewe-os"
-version = "2.1.0"
+version = "3.0.0"
 chip = "c3"
 
 [core]
 repo = "https://github.com/xewe-labs/xewe-os-core"
-ref = "latest"
+ref = "3.0.0"
 
 [modules]
 repo = "https://github.com/xewe-labs/xewe-os-modules"
-ref = "latest"
+ref = "3.0.0"
 selected = []
 
 [tools]
 repo = "https://github.com/xewe-labs/xewe-os-tools"
-ref = "latest"
+ref = "3.0.1"
 
 [libraries]
 ArduinoJson = { repo = "https://github.com/bblanchon/ArduinoJson", ref = "v7.4.3" }
