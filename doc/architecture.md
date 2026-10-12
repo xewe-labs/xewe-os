@@ -2,7 +2,8 @@
 
 Why XeWe OS is shaped the way it is. The [README](../README.md) says how to use it; this page says
 why it is four repositories, why the sketch has exactly one include, why modules carry an explicit
-declare line, and what is decided versus still open.
+declare line, what is decided versus still open, and where XeWe OS stands against the rest of the
+ESP32 ecosystem (section 8).
 
 ## 1. Purpose and philosophy
 
@@ -15,6 +16,11 @@ declare line, and what is decided versus still open.
   HTTP command endpoint: each took effort to get right on an ESP32. A module captures that once, in
   one repo, behind one contract, so the next project (or the next agent) selects it instead of
   solving it again.
+- **The contract is the product.** Flashing, serial consoles, version pinning and Wi-Fi portals
+  all exist elsewhere; XeWe OS wraps them. What it owns is the module contract: one id that is the
+  CLI group and the NVS namespace, the same verbs on every module, typed settings, three tests a
+  host runs over serial, and a device that can describe its own commands and settings. Section 8
+  shows where this stands against the rest of the ecosystem.
 - **Agents are first-class users.** Every action is a non-interactive command with stable output
   and exit codes (`xewe build`, `xewe test`, `xewe modules validate`). Rules that break silently
   are written down in each repo's agent guide (`.agents/AGENTS.md` and `.agents/RULES.md`) and
@@ -251,7 +257,7 @@ unused.
 | D2 | No OTA | Keep `no_ota` partitions; flashing is serial only |
 | D3 | Template UX is `git clone` → `./setup.sh` → `./run.sh` | Needs Python and git; `setup.sh` writes `run.sh` |
 | D4 | Modules live in **one repo** (`xewe-os-modules`) | One contract, one validator, one index |
-| D5 | Stay on **arduino-cli** | PlatformIO is not clearly better: C6 Arduino support only exists in the community pioarduino fork, and the test runner is custom code either way |
+| D5 | Stay on **arduino-cli** | PlatformIO is not clearly better: its espressif32 platform still ships Arduino 2.0.17, so Arduino 3.x on C6 needs the community pioarduino fork; it has no lock file; and the test runner is custom code either way. arduino-cli `sketch.yaml` profiles (1.3 and later) pin core, libraries and FQBN, see §8 |
 | D6 | Testing is hardware-in-the-loop with an attached board, and compile-only without one | Both paths are first class |
 | D8 | **One library: `XeWeCore`** = utils + serial + cli + nvs + os | Avoids the `xewe-os` / `XeWeOS` name collision. ArduinoJson (header-only, the standard Arduino JSON library) is its one dependency |
 | D9 | "Core" not "Kernel" | Kernel implies scheduling/memory management, which this does not do |
@@ -279,7 +285,173 @@ Open and deferred:
 | CI strictness and release branch | settled at 3.0.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release and commits the binaries to `main` (`releases_branch: main`, Git LFS) |
 | laptop-cooling-pad migration | on hold; first real consumer once the backbone is published |
 | xewe-led-os migration | out of scope for now; after the backbone is proven |
+| Self-describing device | proposed (§8): one command that dumps every module's commands and settings schema as machine-readable JSON; `$<id> schema` per module exists, the device-wide manifest does not |
+| `xewe.toml` and `sketch.yaml` profiles | proposed (§8): generate one arduino-cli profile per chip from the manifest and let arduino-cli install and cache; keep `xewe.toml` for what profiles cannot pin (git refs, hashes, `--define` values, tool versions) |
+| `xewe test` on pytest-embedded | proposed (§8): build the board runner on pytest-embedded's `arduino` and `serial-esp` services; xewe keeps the compile-only fallback, the USB re-enumeration wait and the provisioning fixture |
+| `xewe::Cli` on arduino-esp32 `Console` | to evaluate (§8): keep `$group` dispatch, the uniform verbs and paste-safe queueing as a layer above the vendor console |
+| Improv Serial | proposed (§8): speak Improv for the Wi-Fi and device-name part of first boot so ESP Web Tools hosts work; the dotenv helper keeps timezone and module settings |
+| License of the library | open (§8): the gap the survey found is a *permissively licensed* includable library; the template and the modules are GPL-3.0-only. Either the core and modules move to a permissive license or the claim is narrowed to "includable, GPL" |
 | Web UI builder | the exporter is `xewe webui` (tools `doc/webui.md`); later: prototype UIs under constraints that port straight to a web-interface module |
 | Web flasher hosting | later: move the ESP Web Tools flasher into the org, fed by `static/firmware/releases/` |
 | OTA | out of scope (D2) |
 | Windows | deferred; the tools keep paths portable |
+
+## 8. Where XeWe OS stands
+
+A survey of the ESP32 ecosystem as of 2026, capability by capability, against what this template
+and its three repositories do. The short version: almost every mechanism exists somewhere, nobody
+combines them the way the module contract does, and the more plumbing XeWe OS hands to existing
+tools the more of its effort lands on the contract.
+
+### 8.1 Host side: mostly re-wrapped
+
+- **Pinning.** Since arduino-cli 1.3 a `sketch.yaml` profile pins the core platform and its index
+  URL, exact Library-Index library versions with transitive dependencies, local `dir:` libraries
+  and a full FQBN, installs into an isolated per-profile cache, and from 1.4 has `arduino-cli
+  profile` subcommands ([sketch-project-file.md](https://github.com/arduino/arduino-cli/blob/master/docs/sketch-project-file.md)).
+  Profiles cannot pin git refs, ZIP URLs, content hashes, `--build-property` values or tool
+  versions other than the platform's, and each board needs its own profile. Those limits are the
+  only reasons `xewe.toml` needs to exist beside a profile; pinning ArduinoJson by version is not
+  one of them. PlatformIO has no lock file at all. ESP-IDF's component manager has a
+  solver-generated `dependencies.lock` with a manifest hash and per-component hashes, which is the
+  design to copy if `xewe.toml` grows hashes.
+- **Flashing that keeps NVS** is not an invention, it is the default when nothing goes wrong:
+  arduino-esp32's upload writes only bootloader, partition table, boot_app0 and app, and esptool
+  erases only the sectors it writes. The hazard is the `.merged.bin`, padded with 0xFF to full
+  flash size, which wipes NVS when written at 0x0. XeWe OS flashes exactly that image, so its real
+  value here is making "update" (`flash`, NVS kept) and "fresh install" (`run`, erase first) two
+  explicit modes, and applying `--after watchdog-reset` on chips with native USB-Serial/JTAG.
+- **Serial console.** `arduino-cli monitor`, `pio device monitor` and `idf.py monitor` all exist.
+  The timestamped `xewe serial` has no differentiation.
+- **Board tests.** Espressif's pytest-embedded (MIT) has an `arduino` service that reads the
+  arduino-cli build directory, flashes only changed sectors, selects ports by serial number, MAC
+  or USB location, drives several boards with `--count` and offers `dut.expect()`; arduino-esp32
+  itself tests with it on Wokwi, QEMU and hardware ([pytest-embedded](https://github.com/espressif/pytest-embedded)).
+  It lacks exactly what `xewe test` emphasises: an automatic compile-only fallback when no board
+  is attached (D22), a "wait for the native-USB port to re-enumerate and see the boot banner"
+  primitive, and a provisioning step. labgrid, Jumpstarter and `pio test` lack them too. The
+  harness is justified by its CLI-driven test semantics and its fallback, not by its serial
+  plumbing.
+
+### 8.2 Firmware side: every primitive exists, as loose parts or inside monoliths
+
+- **`$group command args` CLI: partial.** arduino-esp32 3.3 ships a first-party `Console` library
+  on the IDF console (argtable parsing, REPL with history, plain mode for scripting, UART and
+  HWCDC) with a flat namespace ([Console](https://github.com/espressif/arduino-esp32/tree/master/libraries/Console)).
+  ESP32SerialCtl (MIT) has a `group` per command, `help <group>` and an `OK`/`ERR` convention very
+  close to `xewe::Cli`; AdvancedCLI (MIT) has two-level subcommands with typed arguments. Nothing
+  enforces one verb set across modules, and nothing documents keeping back-to-back pasted lines
+  while a command runs (AdvancedCLI's example drops them).
+- **Uniform `status`/`enable`/`disable`/`reset` verbs: unique.** The nearest is Tasmota's
+  convention that a command without parameters returns its settings as JSON.
+- **Typed NVS settings: partial.** MycilaConfig (MIT) has declared keys, typed get/set over a
+  `std::variant`, validators, change callbacks and an `_enable` suffix convention, but no
+  per-module namespaces and no command layer; its validator and `_pwd` masking are worth reading
+  before extending XeWe settings. Arduino `Preferences` silently returns the caller's default on a
+  type mismatch, so strict typing on NVS is real value. Tasmota and ESPHome store opaque blobs and
+  expose no per-key types.
+- **Runtime-queryable settings schema: unique.** A schema a host can read over serial (name,
+  type, default, range, secret flag) exists nowhere else. `$<id> schema` is this; a device-wide
+  manifest is not written yet.
+- **FlexData JSON layer: partial.** Precedent only in ESP32-sveltekit's stateful services and
+  Tasmota's JSON responses, both on ArduinoJson. Valuable only if CLI, NVS and web all route
+  through it.
+- **Bounded prompts: unique, and contrarian.** Shellminator has timed `waitForKey` and
+  `selectList` but an unbounded line `input()`; no library pairs yes/no, string and integer prompts
+  with both a timeout and a retry count. Tasmota, ESPEasy, WLED and Meshtastic avoid prompts
+  entirely and use one command grammar over every transport, which is what makes them scriptable.
+  XeWe's prompts are defensible only because they are bounded and `xewe provision` answers them;
+  an unbounded prompt would be a regression.
+- **Wi-Fi, web, time, scheduler, buttons, pins modules: covered.** WiFiManager and
+  MycilaESPConnect do portals, ESP32-sveltekit does web UI with NTP, provisioning and OTA; timers,
+  rules, buttons and GPIO config are standard in Tasmota, ESPHome and ESPEasy. The modules justify
+  themselves by conforming to the contract; the radio, HTTP and debounce logic underneath should be
+  borrowed wherever the licence allows.
+
+### 8.3 The contract as a library is the one real gap
+
+Every large ESP32 platform picks modules at compile time and ships as a finished firmware: Tasmota
+with `USE_*` defines and per-driver command tables, ESPEasy with `USES_P0xx` plugin sets, WLED with
+`REGISTER_USERMOD()` and per-usermod `addToConfig`/`readFromConfig`, Meshtastic with
+`MESHTASTIC_EXCLUDE_*` and `ProtobufModule<T>`. ESPHome comes closest to the contract (a `DOMAIN`
+id, a config schema, a test file per component), but its tests are compile-only and its
+includable library `esphome-core` was archived in 2021. Libraries in XeWe's shape are dormant
+(Homie, Basecamp: last release 2020) or whole alternative frameworks (Sming, Mongoose OS, Toit).
+Tasmota, Meshtastic and OpenMQTTGateway are GPL-3.0 and WLED is EUPL-1.2, so their module code
+cannot be lifted into a permissively licensed library.
+
+Behavioural tests per module, driven over the serial CLI on real hardware, have no reusable
+precedent either: WLED states it has no C++ unit tests, and Tasmota and ESPEasy CI are build-only.
+Real behavioural testing exists only as project-internal harnesses (Meshtastic's native Unity tests
+plus a hardware tier, Marlin's simulators, Espressif's pytest-embedded runners).
+
+First-boot provisioning from a dotenv file is unique. The closest neighbour is Improv Serial,
+which carries Wi-Fi credentials, device info, scanning, hostname and device name, but no timezone
+or custom settings, and has device and browser SDKs but no maintained Python host
+([Improv serial](https://www.improv-wifi.com/serial/)).
+
+The agent-oriented development model (D23) is standard practice now: ESPHome, WLED and Tasmota
+ship agent guides, and Meshtastic ships an MCP server that lets agents flash, configure and test
+real devices. The angle left is narrower and at the library level: deterministic CLI responses and
+queryable command and settings manifests, so a device is agent-operable without a per-project
+prompt.
+
+### 8.4 Verdict per capability
+
+| Capability | Closest existing tools | Verdict |
+|---|---|---|
+| `$group command args` CLI (`xewe::Cli`) | arduino-esp32 `Console`, ESP32SerialCtl, AdvancedCLI, IDF console | partial: grouping exists, per-module ownership does not |
+| Uniform `status`/`enable`/`disable`/`reset` verbs | Tasmota naming convention | **unique**; small but real |
+| Typed NVS settings (`xewe::Nvs`, settings tables) | Preferences (silent mismatch), MycilaConfig | partial: per-module namespace and strict mismatch errors are new |
+| Runtime-queryable settings schema (`$<id> schema`) | none | **unique**; the highest-leverage gap for agents and host tools |
+| `xewe::FlexData` | ArduinoJson, ESP32-sveltekit stateful services | partial |
+| Bounded prompts (timeout and retries) | Shellminator (timeouts only) | **unique**, contrarian: product firmwares avoid prompts |
+| `XeWeOs` facade and module contract (id, commands, NVS, three tests) | ESPHome, WLED usermods, Tasmota drivers | **unique as an includable library**; the core differentiator |
+| wifi, web-interface, time, scheduler, buttons, pins | WiFiManager, MycilaESPConnect, ESP32-sveltekit, Tasmota, ESPHome | covered: keep thin, wrap |
+| `xewe.toml` refs | arduino-cli `sketch.yaml` profiles, IDF `dependencies.lock` | mostly covered: justified for git refs, hashes, `--define` values, tool versions |
+| Per-chip C3/C6/S3 builds | one profile per board, PlatformIO envs | covered; one chip matrix in one file is a convenience |
+| Flash that keeps NVS (`xewe flash`) | arduino-cli upload, pytest-embedded fast-flash | covered; value is the explicit update vs fresh-install split |
+| `xewe serial` | arduino-cli, pio, idf.py monitors | covered |
+| `xewe test` board runner | pytest-embedded (arduino, wokwi, qemu, esp-emu) | mostly covered; unique in CLI semantics, compile-only fallback, re-enumeration handling |
+| Automatic compile-only fallback (D22) | manual CI wiring elsewhere | **unique**, easy to copy |
+| Dotenv first-boot provisioning (`xewe provision`) | Improv Serial, Tasmota `Backlog` | **unique**; should interoperate with Improv |
+| Template with `setup.sh` and generated `run.sh` | ESP32-sveltekit template | unique, low moat |
+| Agent-oriented model (D23) | ESPHome, WLED, Tasmota agent docs; Meshtastic MCP server | covered, and behind Meshtastic |
+
+### 8.5 What follows
+
+Candidates, not decisions; each is listed in the open items of section 7.
+
+1. **Generate `sketch.yaml` profiles from `xewe.toml`**, one per chip, and let arduino-cli install
+   and cache. `--dump-profile` bootstraps one. Keep `xewe.toml` for what profiles cannot express
+   and model any hashes on IDF's `dependencies.lock`.
+2. **Build `xewe test` on pytest-embedded's `arduino` and `serial-esp` services** rather than
+   beside them: diff-flashing, port selection by MAC or serial number, several boards, and
+   board-free backends (Wokwi; QEMU for S3 and C3 without Wi-Fi; Espressif's beta esp-emu with an
+   emulated soft-AP) come for free. XeWe contributes the compile-only fallback, the re-enumeration
+   wait and the provisioning fixture.
+3. **Evaluate `xewe::Cli` on arduino-esp32's `Console`** (or the IDF console), keeping `$group`
+   dispatch, the uniform verbs and paste-safe queueing as a layer above it. Gains line editing,
+   history and HWCDC support from a vendor-maintained library; costs the IDF console's REPL task
+   model.
+4. **Wrap, do not reimplement, the wifi and web modules**: MycilaESPConnect or WiFiManager for
+   connection and portal handling, ArduinoJson (already pinned) under `xewe::FlexData`.
+5. **Speak Improv Serial for the Wi-Fi and device-name part of first boot**, so ESP Web Tools and
+   other Improv hosts work out of the box; the dotenv helper keeps timezone and module settings.
+   The ESP Web Tools `manifest.json` that `xewe release` already writes is the de facto
+   distribution format.
+6. **A device that describes itself**: one command that dumps every module's commands and settings
+   schema as machine-readable JSON. It makes a XeWe device agent-operable without per-project
+   prompts, nothing in the ecosystem offers it, and it is a better investment than further work on
+   flashing, pinning or console tooling.
+
+One point cuts across all of these. The gap the survey found is a *permissively licensed*
+includable library. This template and the modules are GPL-3.0-only, so the gap is only partly
+XeWe's to claim until the license question in section 7 is settled.
+
+### 8.6 What the survey did not cover
+
+The PlatformIO registry and the full Arduino index were not searched exhaustively for NVS-schema or
+JSON-data-layer libraries, so a niche equivalent could exist. Whether pytest-embedded reopens a port
+after USB re-enumeration was not confirmed. Serial pretty-printers were not assessed. The absence of
+another `setup.sh`/`run.sh` template bundle is a negative search result, not proof.

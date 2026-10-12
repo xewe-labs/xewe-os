@@ -7,6 +7,30 @@ you choose, plus your own code. The repository holds only your code and `xewe.to
 else is fetched into `build/` by `./setup.sh`, and the toolchain is shared by every project on the
 machine.
 
+## What is XeWe's, and what is borrowed
+
+Most of the plumbing in this template exists elsewhere in the 2026 ESP32 ecosystem: arduino-cli
+pins versions and flashes without touching NVS, arduino-cli and ESP-IDF ship serial monitors,
+Espressif's pytest-embedded flashes and talks to boards from pytest, and WiFiManager,
+MycilaESPConnect and ESP32-sveltekit already do Wi-Fi portals, web UIs and NTP. XeWe OS does not
+compete there. The Wi-Fi, web and time modules are thin adapters over such libraries, and the
+`xewe` tools wrap arduino-cli, esptool and pytest rather than replace them.
+
+What no other library you can `#include` offers is the **module contract**. Every module declares
+one id that is both its CLI group and its NVS namespace, answers the same verbs as every other
+module (`status`, `enable`, `disable`, `reset`, and `set`/`get`/`schema` for its settings), keeps
+typed settings whose type mismatches are errors instead of silent defaults, and ships three tests
+a host runs over serial. Tasmota, ESPHome and WLED have this pattern, but as finished firmwares you
+configure, under GPL or EUPL. Around the contract sit a few things that are also XeWe's alone:
+first-boot prompts bounded by a timeout and a retry count, with `xewe provision` answering them
+from flags or a dotenv file; a `schema` command that lets a host or an agent read every setting's
+name, type, default and range at runtime; and a test runner that compiles and reports
+`compiled, not run` when no board is attached instead of failing.
+
+So the useful mental model is not "an OS for the ESP32" but "a contract plus the tools to prove
+a module keeps it". The survey behind this, capability by capability, and what it implies for the
+roadmap are in [doc/architecture.md](doc/architecture.md#8-where-xewe-os-stands).
+
 ## Where this fits: level 3
 
 XeWeCore has three onboarding levels. Levels 1 and 2 need nothing but the Arduino IDE:
@@ -201,7 +225,7 @@ A reusable module belongs in the modules repository: see its
 
 | What | Where |
 |---|---|
-| Why the ecosystem is shaped this way, the decisions | [doc/architecture.md](doc/architecture.md) |
+| Why the ecosystem is shaped this way, the decisions, where it stands against other ESP32 tools | [doc/architecture.md](doc/architecture.md) |
 | Naming rules for every repository | [doc/naming.md](doc/naming.md), checked by `xewe brand-lint` |
 | XeWeCore: Os, modules, settings, console, NVS | [xewe-os-core `doc/`](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/README.md) |
 | The modules and how to write one | [xewe-os-modules](https://github.com/xewe-labs/xewe-os-modules#readme) |
