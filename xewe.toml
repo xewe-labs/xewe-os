@@ -4,9 +4,9 @@
 schema = 1
 
 [project]
-name = "xewe-os"
+name = "xewe-led-os"
 version = "3.0.0"
-chip = "c3"
+chip = "s3"
 
 [core]
 repo = "https://github.com/xewe-labs/xewe-os-core"
@@ -15,7 +15,10 @@ ref = "3.0.0"
 [modules]
 repo = "https://github.com/xewe-labs/xewe-os-modules"
 ref = "3.0.0"
-selected = []
+# Dev setup: the modules source is the LOCAL checkout ../xewe-os-modules, given to every ./setup.sh as
+# XEWE_MODULES_SOURCE (xewe.toml has no path key; the ref below is only used when that variable is unset).
+# wifi/web-interface/time/scheduler/buttons replace the 2.3.x copies; the led module comes later.
+selected = ["wifi", "web-interface", "time", "scheduler", "buttons", "led", "led-web"]
 
 [tools]
 repo = "https://github.com/xewe-labs/xewe-os-tools"
@@ -23,3 +26,6 @@ ref = "3.0.1"
 
 [libraries]
 ArduinoJson = { repo = "https://github.com/bblanchon/ArduinoJson", ref = "v7.4.3" }
+# led (depends_libraries=FastLED): pinned here as in xewe-led-os HEAD; the manifest wins over the
+# modules libraries.toml catalogue. 3.10.3 as in 2.3.x (3.10.4-3.10.6 are 90-230 KB larger).
+FastLED = { repo = "https://github.com/FastLED/FastLED", ref = "3.10.3" }
