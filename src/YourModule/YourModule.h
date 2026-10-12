@@ -8,9 +8,10 @@
 
 #include <XeWeCore.h>
 
-// Settings fixed at compile time, passed from the sketch: YourModule your_module(os, {.heartbeat = false});
+// Settings fixed at compile time, passed from the sketch: YourModule your_module(os, {.heartbeat =
+// false});
 struct YourModuleConfig {
-    bool heartbeat = true;      // print the number every beat_s seconds from loop()
+    bool heartbeat = true; // print the number every beat_s seconds from loop()
 };
 
 class YourModule : public xewe::Module {
@@ -27,21 +28,21 @@ public:
     // This module needs none: the core loads the settings table before any of them.
 
     // loop: called from os.loop() while the module is enabled. Must never block.
-    void        loop()                                      override;
+    void loop() override;
 
     // status: used by `$your_module status` and by the `$system status` table.
-    std::string status(const bool verbose = false)    const override;
+    std::string status(const bool verbose = false) const override;
 
     // Run-time settings: the table in YourModule.cpp. The core loads it at begin (default,
     // then NVS) and adds `$your_module set|get|schema`, one status line per row, `$system schema`.
-    xewe::Settings settings()                         const override;
+    xewe::Settings settings() const override;
 
     // Public API: other modules (or the sketch) may call this too.
-    void        set_number(uint16_t value);
+    void set_number(uint16_t value);
 
 private:
     YourModuleConfig config;
-    uint16_t         number       = 0;  // table rows; NVS keys "number", "beat_s" in namespace "your_module"
-    uint16_t         beat_s       = 10;
-    uint32_t         last_beat_ms = 0;
+    uint16_t number = 0; // table rows; NVS keys "number", "beat_s" in namespace "your_module"
+    uint16_t beat_s = 10;
+    uint32_t last_beat_ms = 0;
 };
