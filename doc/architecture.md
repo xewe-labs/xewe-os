@@ -33,14 +33,15 @@ with arduino-cli (D5).
 | [`xewe-os`](https://github.com/xewe-labs/xewe-os) | the firmware template users clone | its own code, `xewe.toml`, `setup.sh` and released firmware; `run.sh` is generated |
 | [`xewe-os-core`](https://github.com/xewe-labs/xewe-os-core) | `XeWeCore`, the one Arduino library | reusable code every firmware needs; publishable on its own; depends only on ArduinoJson |
 | [`xewe-os-modules`](https://github.com/xewe-labs/xewe-os-modules) | every module, `modules/<slug>/` | features some firmware needs; the contract in `doc/contract.md`, the index in `doc/modules.md`; no toolchain of its own; built and tested through an `xewe-os` checkout (D21) |
-| [`xewe-os-tools`](https://github.com/xewe-labs/xewe-os-tools) | `xewe`, one Python package (`src/xewe/`) | everything that runs on the host: setup, build, flash, serial, test, release, format (the one C++ style file ships inside the package), brand-lint. The spec is `doc/spec.md` |
+| [`xewe-os-tools`](https://github.com/xewe-labs/xewe-os-tools) | `xewe`, one Python package (`src/xewe/`) | everything that runs on the host: setup, build, flash, serial, test, release, format (the one C++ style file ships inside the package), brand-lint, webui (a Flask web UI prototype exported as PROGMEM headers). The spec is `doc/spec.md` |
 
 Every repo has the same top level: `README.md` and `LICENSE.txt` are the only files written for a
 reader at the root, longer pages live in `doc/`, the agent guide in `.agents/`, CI in
 `.github/workflows/`. No repo commits a `.clang-format` or a `run.sh` (D25).
 
-[`publish-arduino-library`](https://github.com/xewe-labs/publish-arduino-library) stays a separate,
-generic tool that checks and releases `XeWeCore` (D18).
+`XeWeCore` is checked by its own CI (host tests, examples, `arduino-lint` against the rules in
+core's [`doc/library-rules.md`](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/library-rules.md))
+and released by its own `scripts/release.sh` (D18).
 
 ```
                         xewe-os  (template)
@@ -51,8 +52,8 @@ generic tool that checks and releases `XeWeCore` (D18).
       (XeWeCore lib) <── each module has      (xewe: setup, build,
              ^           requires_core         flash, serial, test)
              │                                     │
-  publish-arduino-library                fetches core and ArduinoJson into the
-  (check + release XeWeCore)             project's build/; arduino-cli, the esp32
+   scripts/release.sh                    fetches core and ArduinoJson into the
+  (tag + release XeWeCore)               project's build/; arduino-cli, the esp32
                                          core and modules once per machine
 ```
 
@@ -209,7 +210,7 @@ elsewhere. The tools never read or write `~/.arduino15` or `~/Arduino`.
 
 | Repo | Version | Tag | Released by |
 |---|---|---|---|
-| `xewe-os-core` | semver in `library.properties` | `X.Y.Z` (un-prefixed, Arduino registry rule) | `publish-arduino-library` check + release |
+| `xewe-os-core` | semver in `library.properties` | `X.Y.Z` (un-prefixed, Arduino registry rule) | `scripts/release.sh`; the Library Manager picks up the tag |
 | `xewe-os-modules` | per module (`module.properties`) and the set | `<module>/X.Y.Z` per module, `X.Y.Z` for the set | `scripts/release.sh`; each module declares `requires_core`, for example `>=3.0.0,<4.0.0` |
 | `xewe-os-tools` | `pyproject.toml` | `X.Y.Z` | `scripts/release.sh` |
 | `xewe-os` | `xewe.toml [project] version`, independent | `X.Y.Z` | `scripts/release.sh` tags; CI builds, publishes and commits the binaries under `static/firmware/releases/` |
@@ -262,7 +263,7 @@ unused.
 | D15 | One board attached at a time; compile per board costs ~1 min | Tester compiles only the attached/selected chip by default; the full C3/C6/S3 matrix runs only on an explicit flag |
 | D16 | Utils is **inside** `XeWeCore` | Header-only; everything depends on it |
 | D17 | `XeWeCore` layout: **`XeWeOs` facade + standalone component headers** | See section 3; `os.serial`, `os.cli`, `os.nvs`, `os.system` |
-| D18 | `publish-arduino-library` **stays a separate repo** | Generic Arduino-library publishing tool; not folded into xewe-os-tools |
+| D18 | **No separate publishing tool**: `XeWeCore` is released by its own `scripts/release.sh`; its Library Manager rules live in core's `doc/library-rules.md` and CI runs `arduino-lint` (strict) on it | One library is left to publish, so the multi-library publishing repo was retired |
 | D19 | Repo names are **prefixed**: `xewe-os-core`, `xewe-os-modules`, `xewe-os-tools`, `xewe-os` | Everything reads as part of xewe-os |
 | D20 | `xewe-os` is a **GitHub template repository** and also plain-cloneable | "Use this template" gives fresh history; clone keeps working |
 | D21 | Modules are built and tested **through a `xewe-os` checkout** as the harness | The modules repo carries no toolchain; a harness is a copy of the template with the module selected. One build path, nothing to drift |
@@ -278,7 +279,7 @@ Open and deferred:
 | CI strictness and release branch | settled at 3.0.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release and commits the binaries to `main` (`releases_branch: main`, Git LFS) |
 | laptop-cooling-pad migration | on hold; first real consumer once the backbone is published |
 | xewe-led-os migration | out of scope for now; after the backbone is proven |
-| Frontend builder v2 | later: prototype UIs in Flask/FastAPI under constraints that port to a web-interface module |
+| Web UI builder | the exporter is `xewe webui` (tools `doc/webui.md`); later: prototype UIs under constraints that port straight to a web-interface module |
 | Web flasher hosting | later: move the ESP Web Tools flasher into the org, fed by `static/firmware/releases/` |
 | OTA | out of scope (D2) |
 | Windows | deferred; the tools keep paths portable |
