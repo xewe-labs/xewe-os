@@ -85,7 +85,7 @@ my-fw/
 ├── setup.sh                 committed   bootstraps build/tools/.venv, then calls `python -m xewe setup`
 ├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules
 ├── tests/board/  tests/unit/  committed  the project's tests (`xewe test`)
-├── static/firmware/releases/  committed  written by `xewe release`
+├── static/firmware/releases/  .gitkeep only  build output of `xewe release`; ignored, binaries are release assets (D26)
 ├── README.md  LICENSE.txt  doc/  .agents/  .github/workflows/ci.yml   committed
 ├── run.sh                   generated   written by every ./setup.sh; calls `xewe run`
 ├── .env                     local       credentials for `xewe provision`; optional, yours (setup never writes it)
@@ -183,7 +183,7 @@ Every command and flag is in the tools' `doc/spec.md`; the main ones:
 | `boards`, `doctor`, `clean` | board discovery; environment check; delete generated output |
 | `modules list\|select\|validate\|generate`, `manifest show\|update` | modules and refs |
 | `provision` | answers the first-boot prompts of a flashed board (name, modules, Wi-Fi, timezone) |
-| `release --version X.Y.Z` | release matrix into `static/firmware/releases/` (run by CI on a tag; see §6) |
+| `release --version X.Y.Z` | release matrix into `build/release/` and the assets staged for the GitHub Release (run by CI on a tag; see §6) |
 | `format [--check]`, `brand-lint [DIR...]` | C++ in the XeWe style shipped with the tools (no column alignment); banned brand spellings ([naming.md](naming.md)) |
 
 **`xewe.toml`** is the project's manifest, its whole dependency state: `[project]` (name, version,
@@ -219,32 +219,33 @@ elsewhere. The tools never read or write `~/.arduino15` or `~/Arduino`.
 | `xewe-os-core` | semver in `library.properties` | `X.Y.Z` (un-prefixed, Arduino registry rule) | `scripts/release.sh`; the Library Manager picks up the tag |
 | `xewe-os-modules` | per module (`module.properties`) and the set | `<module>/X.Y.Z` per module, `X.Y.Z` for the set | `scripts/release.sh`; each module declares `requires_core`, for example `>=3.0.0,<4.0.0` |
 | `xewe-os-tools` | `pyproject.toml` | `X.Y.Z` | `scripts/release.sh` |
-| `xewe-os` | `xewe.toml [project] version`, independent | `X.Y.Z` | `scripts/release.sh` tags; CI builds, publishes and commits the binaries under `static/firmware/releases/` |
+| `xewe-os` | `xewe.toml [project] version`, independent | `X.Y.Z` | `scripts/release.sh` runs the tests once, renders `release_card.md` and tags; CI builds and publishes the GitHub Release with the images, the card and the notes as assets (D26, D27) |
 
 Tags carry no `v` from 3.0.0 on (older `v` tags keep their names).
 
-**Refs: frozen at 3.0.0.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or `latest`, the
-newest commit of the repository's default branch. The template pins core `3.0.0`, modules `3.0.0`,
-tools `3.0.1` and ArduinoJson `v7.4.3`; the template itself is `3.0.0`. The repositories were
-tagged 3.0.0 together, as one ecosystem generation (tools 3.0.1 adds the release commit to
-`main`); a project moves its refs with `xewe manifest update` (newest tag), and a new core or
+**Refs: pinned to tags, 3.1.0 generation.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or
+`latest`, the newest commit of the repository's default branch. The template pins core `3.1.0`,
+tools `3.1.0`, modules `3.0.0` until the modules set is tagged 3.1.0, and ArduinoJson `v7.4.3`; the
+whole ecosystem releases 3.1.0 in dependency order (tools, core, modules, `xewe-os`, then the
+product). A project moves its refs with `xewe manifest update` (newest tag), and a new core or
 modules release reaches a project only when its manifest moves. `.github/workflows/ci.yml` calls
 the tools workflows at the same tag as `[tools] ref`.
 
-**Release flow.** `scripts/release.sh X.Y.Z` (after `--prepare X.Y.Z` and a pushed prepare commit)
-checks main, the version locations and CI, runs `xewe test --no-board` and a build, and pushes the
-annotated tag `X.Y.Z` with `releases/X.Y.Z/notes.txt` as its message. The tag starts `ci.yml`: the
-build job (c3, c6, s3, host tests, lint), then the release job (`xewe-release.yml`): `./setup.sh`,
-`xewe release` (the default matrix: one plain build per chip), a GitHub Release (the tag message
-plus the resolved commits as notes; the `.bin` files and `firmware-X.Y.Z.tar.gz` as assets), then
-one bot commit `release X.Y.Z (...) [skip ci]` on `main` that adds `static/firmware/releases/X.Y.Z/`
-and `index.json` and keeps the rest of the tree. The `.bin` files are stored in Git LFS
-(`.gitattributes`: `static/**/*.bin`, and png/webp/mp4/numbers). The tag does not contain its own
-binaries; `main` after the bot commit does. The script waits for that run, attaches
-`releases/X.Y.Z/testcard.md` and prints the assets and the commit. The layout is the pre-3.0
-one: `X.Y.Z/{release_notes.txt,firmware_map.csv}` and
-`X.Y.Z/<chip>/<matrix folders>/{X.Y.Z-<chip>-<name>.bin,manifest.json,meta.json,build_notes.txt}`.
-The old `binaries` branch is legacy and untouched.
+**Release flow.** `scripts/release.sh --prepare X.Y.Z` does one complete run (setup, module
+validation, unit tests, the board tests of every chip, the builds, format and brand lint), keeps
+its logs in `releases/X.Y.Z/logs/` (local, gitignored) and renders `releases/X.Y.Z/release_card.md`
+from that run (D27). After a pushed prepare commit, `scripts/release.sh X.Y.Z` verifies the card
+against the tree, checks main and CI, and pushes the annotated tag `X.Y.Z` with
+`releases/X.Y.Z/notes.txt` as its message. The tag starts `ci.yml`: the build job (c3, c6, s3, host
+tests, lint), then the release job (`xewe-release.yml`): one build per chip in parallel, then an
+assembly job that checks the card against those runs and publishes the GitHub Release (the tag
+message plus the resolved commits as notes). The assets are the images, each with its `meta.json`
+and ESP Web Tools `manifest.json`, `firmware_map.csv`, `firmware-X.Y.Z.tar.gz` and
+`release_card.md`. Nothing is committed back: the tag holds the sources and the card, the Release
+holds the binaries (D26). Each image has a direct URL,
+`https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>`. The old `binaries` branch
+and the committed 3.0.0 folder are legacy; the CI lint `No committed firmware` keeps
+`static/firmware/releases/` empty apart from `.gitkeep`.
 
 ## 7. Decisions log
 
@@ -275,14 +276,17 @@ unused.
 | D21 | Modules are built and tested **through a `xewe-os` checkout** as the harness | The modules repo carries no toolchain; a harness is a copy of the template with the module selected. One build path, nothing to drift |
 | D22 | **No board is a normal state.** Without a board, board tests compile only; the runner reports "compiled, not run" and exits 0 | `--require-board` makes a missing board an error; `XEWE_NO_BOARD=1` never opens a port |
 | D23 | **Agent-driven development** | Coding agents do the hands-on work; a supervising session verifies and steers; issues are resolved and logged, only critical ones interrupt the maintainer |
-| D24 | **Development mode until 3.0.0: refs were `latest`** | Manifests track `latest`; harnesses build from local working trees (`XEWE_*_SOURCE`); every repository was tagged `3.0.0` together, with CI/CD, and refs are frozen since |
+| D24 | **Development mode until 3.0.0: refs were `latest`** | Manifests track `latest`; harnesses build from local working trees (`XEWE_*_SOURCE`); every repository was tagged `3.0.0` together, with CI/CD, and refs are pinned to tags since (3.1.0 for the next generation, §6) |
 | D25 | **One repo layout** | `README.md` and `LICENSE.txt` are the only reader files at a root; pages live in `doc/`; the C++ style ships with the tools; `run.sh` is written by `setup.sh` and never committed |
+| D26 | **Binaries are GitHub Release assets only, never committed** | A release publishes each image as an asset with a direct URL (`https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>`); nothing is committed back to `main`, so the tag is the source and the Release is the binary. Git LFS is for `static/media/**` only. `static/firmware/releases/` holds `.gitkeep`; the CI lint `No committed firmware` fails on anything else. Branch publishing (`publish_branch`, `releases_branch`) is deprecated and off |
+| D27 | **Every release has a generated `release_card.md`** | `scripts/release.sh` produces it from one complete run (setup, validation, unit, board per chip, builds, lint) with `xewe release-card`; no hand-written cards. The card records what ran on which commit and tree, every test per chip, and what was not covered (chips without a hardware run are stated as compile only). It is a release asset. The run logs stay in `releases/X.Y.Z/logs/`, local and gitignored; the card lists their names, sizes and sha256 but links none. CI verifies the card against the tagged tree and fails on a mismatch |
+| D28 | **Project-local modules in a product's `src/` are first class** | A module in `src/<Name>/` has the same `xewe::Module` API, contract, tests and NVS namespace rules as one from `xewe-os-modules`; it is declared in the sketch and needs no entry in the modules repo. `src/YourModule/` (smallest) and `src/YourModuleFull/` (every hook) are the patterns. A module that other firmwares need moves to the modules repo (D4) |
 
 Open and deferred:
 
 | Item | State |
 |---|---|
-| CI strictness and release branch | settled at 3.0.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release and commits the binaries to `main` (`releases_branch: main`, Git LFS) |
+| CI strictness and release publishing | settled at 3.1.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release with the images, the card and the notes as assets; nothing is committed to `main` (D26) |
 | laptop-cooling-pad migration | on hold; first real consumer once the backbone is published |
 | xewe-led-os migration | out of scope for now; after the backbone is proven |
 | Self-describing device | proposed (§8): one command that dumps every module's commands and settings schema as machine-readable JSON; `$<id> schema` per module exists, the device-wide manifest does not |
@@ -292,7 +296,7 @@ Open and deferred:
 | Improv Serial | proposed (§8): speak Improv for the Wi-Fi and device-name part of first boot so ESP Web Tools hosts work; the dotenv helper keeps timezone and module settings |
 | License of the library | open (§8): the gap the survey found is a *permissively licensed* includable library; the template and the modules are GPL-3.0-only. Either the core and modules move to a permissive license or the claim is narrowed to "includable, GPL" |
 | Web UI builder | the exporter is `xewe webui` (tools `doc/webui.md`); later: prototype UIs under constraints that port straight to a web-interface module |
-| Web flasher hosting | later: move the ESP Web Tools flasher into the org, fed by `static/firmware/releases/` |
+| Web flasher hosting | later: move the ESP Web Tools flasher into the org, fed by the Release asset URLs (D26) |
 | OTA | out of scope (D2) |
 | Windows | deferred; the tools keep paths portable |
 
