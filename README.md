@@ -125,8 +125,8 @@ and `tests/unit/` (on the developer machine: `@pytest.mark.unit` Python, or C++ 
 
 | | Paths |
 |---|---|
-| Committed | `xewe-os.ino`, `Config.h` (your settings; `./setup.sh` appends one marked block of compile-time values per selected module, which you edit in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/firmware/releases/` (written by CI after a release tag; `.bin` files in Git LFS, `.gitattributes`), `releases/<version>/` (release notes and test card), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
-| Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again) |
+| Committed | `xewe-os.ino`, `Config.h` (your settings; `./setup.sh` appends one marked block of compile-time values per selected module, which you edit in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/media/` (Git LFS, `.gitattributes`), `static/firmware/releases/.gitkeep`, `releases/<version>/` (`notes.txt` and the generated `release_card.md`), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
+| Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again); `releases/<version>/logs/` are local run logs, ignored |
 | Ignored, yours | `.env`: the credentials `xewe provision` reads, optional; you create it here or in the tools checkout (`./setup.sh` says where and which keys when there is none, and never writes one) |
 | Shared, outside the project | `~/.xewe-os/build-tools/`: deleting it only means the next setup downloads it again |
 
@@ -136,7 +136,7 @@ No submodules. The full `build/` tree is in [doc/architecture.md](doc/architectu
 ## Versions and settings
 
 `xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries:
-core `3.0.0`, modules `3.0.0`, tools `3.0.1`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
+core `3.1.0`, modules `3.0.0` (moves to `3.1.0` once the modules set is tagged), tools `3.1.0`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
 follows the default branch; `xewe manifest update` moves the refs to the newest tags. The ref
 policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
 
@@ -159,29 +159,36 @@ sensor address) are not in `Config.h`; each module README lists its `--define` n
 ## Releases
 
 Tags are `X.Y.Z` with no `v`, equal to `[project] version` in `xewe.toml`. A release is
-`scripts/release.sh --prepare X.Y.Z` (sets the version, creates `releases/X.Y.Z/notes.txt` and
-`testcard.md`), a commit and push of that, then `scripts/release.sh X.Y.Z` (`--dry-run` first): it
-checks the tree and CI, runs the host tests and a build, and pushes an annotated tag whose message
-is `notes.txt`. CI does the rest (`ci.yml`, release job): it builds c3, c6 and s3, publishes a
-GitHub Release with the `.bin` files and `firmware-X.Y.Z.tar.gz`, then commits the release folder
-to `main` (a bot commit after the tag, so the tag itself does not hold its binaries). The script
-waits for that run, attaches `testcard.md` and prints the assets and the commit. Pull afterwards
-with Git LFS installed (`git lfs install`), or the `.bin` files stay pointer files.
+`scripts/release.sh --prepare X.Y.Z --hardware c3,c6,s3` (sets the version, creates
+`releases/X.Y.Z/notes.txt`, then runs setup, module validation, the unit tests, the board tests of
+every chip, the builds, format and brand lint once, and renders `releases/X.Y.Z/release_card.md`
+from that run), a commit and push of that, then `scripts/release.sh X.Y.Z` (`--dry-run` first): it
+verifies the card against the tree, checks CI, and pushes an annotated tag whose message is
+`notes.txt`. The card lists every test per chip and what was not covered; chips without a hardware
+run are marked compile only. The run logs stay in `releases/X.Y.Z/logs/` on your machine and are
+not committed or published.
+
+CI does the rest (`ci.yml`, release job): it builds c3, c6 and s3 and publishes a GitHub Release.
+The images are release assets only and are never committed; `static/firmware/releases/` holds
+just a `.gitkeep`, and the CI lint fails on any other file there. The assets are, per image, the
+merged `.bin` (written at 0x0), its `meta.json` and its ESP Web Tools `manifest.json`, plus
+`firmware_map.csv`, `firmware-X.Y.Z.tar.gz` and `release_card.md`. Each has a direct URL:
 
 ```
-static/firmware/releases/X.Y.Z/
-├── release_notes.txt              # notes.txt plus the commits it was built from
-├── firmware_map.csv               # the release matrix header (CHIP)
-└── <chip>/                        # c3, c6, s3: one plain build each
-    ├── X.Y.Z-<chip>-xewe-os.bin   # merged image, written at 0x0 (Git LFS)
-    ├── manifest.json              # ESP Web Tools manifest
-    └── meta.json                  # size, flags, resolved core/modules/tools/library commits
+https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>
 ```
 
-A `release_matrix.csv` at the root adds rows (a folder per column under `<chip>/`); the tools'
-`doc/spec.md` §11 has the format. The old `binaries` branch is legacy and not written any more.
+Nothing needs Git LFS for firmware; LFS covers `static/media/` only. A `release_matrix.csv` at the
+root adds image rows beyond the plain build per chip; the tools' `doc/spec.md` §11 has the format.
+The committed 3.0.0 folder and the old `binaries` branch are legacy. The decisions are D26 and D27
+in [doc/architecture.md](doc/architecture.md#7-decisions-log).
 
 ## Your own module
+
+Project-local modules are first class (D28 in [doc/architecture.md](doc/architecture.md#7-decisions-log)):
+a module in this project's `src/` uses the same `xewe::Module` API and contract as one from the
+modules repository, with its own `$group` and NVS namespace, and needs no entry anywhere else.
+`src/YourModuleFull/` is the pattern to copy; `src/YourModule/` is the smallest form.
 
 Two project-local example modules are declared in `xewe-os.ino`, after the generated ones. They
 are yours; setup never touches them.

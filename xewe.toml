@@ -10,7 +10,7 @@ chip = "c3"
 
 [core]
 repo = "https://github.com/xewe-labs/xewe-os-core"
-ref = "3.0.0"
+ref = "3.1.0"
 
 [modules]
 repo = "https://github.com/xewe-labs/xewe-os-modules"
@@ -19,7 +19,7 @@ selected = []
 
 [tools]
 repo = "https://github.com/xewe-labs/xewe-os-tools"
-ref = "3.0.1"
+ref = "3.1.0"
 
 [libraries]
 ArduinoJson = { repo = "https://github.com/bblanchon/ArduinoJson", ref = "v7.4.3" }
