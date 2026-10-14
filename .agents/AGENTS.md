@@ -69,12 +69,18 @@ script breaks when the project folder is moved; re-run `./setup.sh` then.
 | Modules | `xewe modules list`, `xewe modules validate [PATH]`; `xewe modules select LIST\|all\|none` only when asked (it edits `xewe.toml`) |
 | Look around | `xewe doctor`, `xewe manifest show`, `xewe boards --no-probe` |
 | Build, erase, flash, listen | `./run.sh` (= `xewe run`; `--keep-nvs` keeps the stored settings) — only when asked |
-| Release (only when asked; the maintainer runs it) | `scripts/release.sh X.Y.Z --dry-run`; `--prepare X.Y.Z` sets the version and creates `releases/X.Y.Z/` |
+| Release (only when asked; the maintainer runs it) | `scripts/release.sh --prepare X.Y.Z --dry-run`, `scripts/release.sh X.Y.Z --dry-run`; a real `--prepare` only on a scratch copy |
 
-Refs are frozen at tags (core `3.0.0`, modules `3.0.0`, tools `3.0.1`); `ci.yml` calls the tools
-workflows at the `[tools] ref` tag. Tags are `X.Y.Z` with no `v`. A tag makes CI build c3, c6 and
-s3, publish a GitHub Release and commit `static/firmware/releases/X.Y.Z/` to `main` (`.bin` in Git
-LFS); never write that folder by hand.
+Refs are pinned to tags (`xewe.toml`); `ci.yml` calls the tools workflows at the `[tools] ref` tag.
+Tags are `X.Y.Z` with no `v`. `scripts/release.sh --prepare X.Y.Z [--hardware c3,c6,s3]` (no git
+change) sets the version, stops with exit 2 until `releases/X.Y.Z/notes.txt` is filled, then records
+one run through `xewe release-card` (setup, `xewe modules validate`, `xewe test --unit-only`, per
+chip the build and the board tests: flashed and run on a `--hardware` chip, compiled, not run on the
+others; format, brand-lint; logs in `releases/X.Y.Z/logs/`, gitignored) and renders the generated
+`releases/X.Y.Z/release_card.md` (no hand-written test card). The tag run verifies the card, waits
+for CI and pushes the tag; the tag's CI builds every image, checks the card and publishes the GitHub
+Release with the images and the card as assets. Nothing is committed back: `static/firmware/releases/`
+holds only `.gitkeep` (images are release assets only); never write there by hand.
 
 `-v` may go after the subcommand (`xewe test -v`). `--define` string values carry their own quotes:
 `--define 'PROJECT_URL="https://..."'`.
