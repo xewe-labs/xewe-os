@@ -86,7 +86,8 @@ true first boot. The board then asks, on the console:
 3. `Initial Setup Complete`, then a restart into normal operation.
 
 The name prompt waits for an answer; build with
-`--define 'XEWE_DEVICE_NAME="Kitchen Lights"'` to skip it. Module prompts are bounded, so they time
+`--define 'XEWE_CORE_DEVICE_NAME="Kitchen Lights"'` to skip it (uncommenting the
+`XEWE_CORE_DEVICE_NAME` line in `Config.h`, or a dotenv value of that name, does the same). Module prompts are bounded, so they time
 out with their default when nobody answers. To keep the stored
 name, Wi-Fi and module choices between runs, use `./run.sh --keep-nvs --chip c3`. `xewe provision`
 answers the first-boot prompts for you (name, modules, Wi-Fi, timezone from flags, environment or
@@ -136,17 +137,21 @@ No submodules. The full `build/` tree is in [doc/architecture.md](doc/architectu
 ## Versions and settings
 
 `xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries:
-core `3.1.0`, modules `3.0.0` (moves to `3.1.0` once the modules set is tagged), tools `3.1.0`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
+core `3.1.0`, modules `3.0.0` (moves to `3.1.0` once the modules set is tagged), tools `3.1.1`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
 follows the default branch; `xewe manifest update` moves the refs to the newest tags. The ref
 policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
 
 The firmware version is `[project] version` in `xewe.toml`; builds never change it. Your settings
-and defaults go in `Config.h`. It includes `<XeWeBuildInfo.h>`, generated per build (name,
-version, timestamp, chip, `--define` values). Never guard that include with `__has_include`:
-arduino-cli then drops the generated library and the defaults win silently. In a plain Arduino IDE
-build, delete that line. Override one value per build with `--define KEY=VALUE`; string values
-carry their own quotes:
-`build/tools/.venv/bin/python -m xewe build --define 'PROJECT_URL="https://example.com"'`.
+and defaults go in `Config.h`, which holds the core block and one block per selected module (the
+[configuration spec](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md) describes
+the scheme). `xewe build` puts three headers in front of every source file: the generated
+`XeWeBuildInfo.h` (version, timestamp, chip), then `Config.h`, then the generated `XeWeOverrides.h`
+(dotenv values and `--define`s). A first-boot value is commented out in `Config.h`; uncomment it to
+pre-answer the question, or set it to `INJECTED_FROM_DOTENV` to take it from the dotenv file. A
+plain Arduino IDE build uses the defaults. Override one value per build with `--define KEY=VALUE`;
+string values carry their own quotes:
+`build/tools/.venv/bin/python -m xewe build --define 'XEWE_CORE_DEVICE_NAME="Bench"'`. The project
+URL is the `.url` on the `XeWeOs os({...})` line of `xewe-os.ino`.
 
 The modules' compile-time values (a LED data pin, a buffer size, listener slots) live in `Config.h`
 too: `./setup.sh` and `xewe modules select` append one marked block per selected module

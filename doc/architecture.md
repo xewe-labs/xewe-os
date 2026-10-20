@@ -80,7 +80,7 @@ project on the machine:
 my-fw/
 ├── xewe-os.ino              committed   #include <XeWeCore.h>; XeWeOs os({...}); your setup()/loop()
 ├── Config.h                 committed   your defaults plus one appended block of compile-time values per
-│                                        selected module (setup adds it once; you edit it); includes <XeWeBuildInfo.h>
+│                                        selected module (setup adds it once; you edit it)
 ├── xewe.toml                committed   the manifest: [project] [core] [modules] [tools] [libraries]
 ├── setup.sh                 committed   bootstraps build/tools/.venv, then calls `python -m xewe setup`
 ├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules
@@ -92,7 +92,7 @@ my-fw/
 ├── src/Modules.h            generated   #include <XeWeModules.h> + the declare lines
 └── build/                   generated   build/.gitignore is `*`
     ├── builds/<chip>/
-    │   ├── gen/XeWeBuildInfo/           the generated header, per build
+    │   ├── gen/XeWeBuildInfo/           the generated XeWeBuildInfo.h and XeWeOverrides.h, per build
     │   ├── cache/                       arduino-cli build path
     │   └── out/                         <version>-<chip>-<name>.bin, manifest.json, meta.json, compile.log
     ├── config/                          build_config.toml (what setup installed), boards.toml (board scans)
@@ -129,7 +129,7 @@ src/
 
 ```cpp
 #include <XeWeCore.h>
-XeWeOs os({.project_name = "my-device", .version = "0.1.0"});
+XeWeOs os({.version = "0.1.0"});
 void setup() { os.begin(); os.serial.println("hi"); }
 void loop()  { os.loop(); }   // os.cli, os.nvs, os.system.restart()
 ```

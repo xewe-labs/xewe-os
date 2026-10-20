@@ -8,7 +8,8 @@ One brand word, every form derived from it.
 | Repos, packages, folders, files, CLI, env home | lowercase `xewe`, kebab `xewe-os-*` | `xewe-os-core`, `xewe.toml`, `xewe`, `~/.xewe-os` |
 | C++ namespace | `xewe::` | `xewe::Module`, `xewe::str::parse_hex_color` |
 | C++ and Python type names | `XeWe` prefix | `XeWeCore`, `XeWeOs`, `XeWeModules`, `XeWeError`, `XeWeContext` |
-| Macros, build defines, environment variables of the core and tools | `XEWE_*` | `XEWE_TESTING`, `XEWE_HOME`, `XEWE_DEVICE_NAME` |
+| Macros, build defines, environment variables of the core and tools | `XEWE_*` | `XEWE_TESTING`, `XEWE_HOME`, `XEWE_CORE_DEVICE_NAME` |
+| The core's configuration values | `XEWE_CORE_<PARAM>`; see [doc/config.md](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md) in xewe-os-core | `XEWE_CORE_SERIAL_BAUD` |
 | A module's compile-time values in its `Config.h` | `XEWE_MODULE_<SLUG>_<NAME>`, slug in upper case with `_` for `-` | `XEWE_MODULE_WIFI_DEBUG` |
 | Module slug (folder in the modules repo, `--modules` names) | lowercase kebab, `^[a-z0-9][a-z0-9-]*$` | `wifi`, `web-interface` |
 | Module id (CLI group and NVS namespace) | lowercase snake, `^[a-z][a-z0-9_]*$`, at most 15 characters, never branded | `$wifi`, `$your_mod_full` |

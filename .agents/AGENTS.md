@@ -83,7 +83,7 @@ Release with the images and the card as assets. Nothing is committed back: `stat
 holds only `.gitkeep` (images are release assets only); never write there by hand.
 
 `-v` may go after the subcommand (`xewe test -v`). `--define` string values carry their own quotes:
-`--define 'PROJECT_URL="https://..."'`.
+`--define 'XEWE_CORE_DEVICE_NAME="Bench"'`. The project URL is `.url` on the sketch's `XeWeOs os({...})` line.
 
 ### No board
 
@@ -117,7 +117,7 @@ no modules, then `xewe build --chip c3`.
 |---|---|
 | `build/` (everything, including `build/modules/` and `build/libraries/`) | `./setup.sh`, `xewe build` |
 | `src/Modules.h` | `xewe modules generate` (run by setup) |
-| `<XeWeBuildInfo.h>` (`build/builds/<chip>/gen/`) | every `xewe build` |
+| `XeWeBuildInfo.h`, `XeWeOverrides.h` (`build/builds/<chip>/gen/`) | every `xewe build` |
 | `build/config/build_config.toml` | `xewe setup` |
 
 Fix the source (`xewe.toml`, the modules repository, the core) and regenerate. The shared toolchain
@@ -128,8 +128,9 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
 
 - The sketch includes `<XeWeCore.h>` (the umbrella); `XeWeOs os({...})` is declared before any
   module; `src/Modules.h` is included after it, then the project-local modules.
-- `Config.h` includes `<XeWeBuildInfo.h>` unconditionally (arduino-cli adds a library only when an
-  include of it fails, so a `__has_include` guard silently drops it).
+- `Config.h` includes nothing: `xewe build` puts the generated `XeWeBuildInfo.h`, then `Config.h`,
+  then the generated `XeWeOverrides.h` in front of every source file (`-include`). It holds the core
+  block and one block per selected module; spec: xewe-os-core `doc/config.md`.
 - The version is `[project] version` in `xewe.toml`, never a literal in code.
 - `src/YourModule/` and `src/YourModuleFull/` are teaching code: their comments explain the
   `xewe::Module` API to a reader, and they must keep compiling against the current core. When the

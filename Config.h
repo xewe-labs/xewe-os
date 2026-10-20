@@ -2,45 +2,73 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // xewe-os/Config.h
 //
-// Build settings and the modules' compile-time values. `xewe build` generates <XeWeBuildInfo.h>
-// (PROJECT_NAME, BUILD_VERSION, BUILD_TIMESTAMP, BUILD_CHIP, XEWE_CHIP_<C3|C6|S3> and every
-// `--define KEY=VALUE`); it wins over the defaults below. The version lives in xewe.toml [project];
-// do not edit it here.
+// Build settings and the compile-time values of the core and the selected modules. `xewe build`
+// puts three headers in front of every source file: the generated XeWeBuildInfo.h first (version,
+// timestamp, chip), this file second, the generated XeWeOverrides.h last (dotenv values and
+// `--define`s). A first-boot value is commented out: uncomment it to pre-answer the question, or
+// set it to INJECTED_FROM_DOTENV to take it from the dotenv file. A plain Arduino IDE build reads
+// none of this and uses the defaults of the core and the modules. The version lives in xewe.toml
+// [project]; do not set it here.
 #pragma once
 
-// Unconditional on purpose: arduino-cli only adds a library to the build when an #include of it
-// fails, so a __has_include() guard would silently drop the generated header. Plain Arduino IDE
-// (no xewe): delete this line; the defaults below then apply.
-#include <XeWeBuildInfo.h>
+// ---- core (xewe modules generate) ----
+// Values of the core. Edit the numbers; keep this marker and the end marker.
+// ---- runtime defaults ----
 
-#ifndef PROJECT_NAME
-#define PROJECT_NAME "xewe-os"
+// Serial baud rate (SerialPortConfig::baud_rate), bits per second
+#ifndef XEWE_CORE_SERIAL_BAUD
+#define XEWE_CORE_SERIAL_BAUD 115200
 #endif
 
-#ifndef BUILD_VERSION
-#define BUILD_VERSION "0.0.0"
+// Serial TX buffer (SerialPortConfig::tx_buffer_size), bytes, set before Serial.begin
+#ifndef XEWE_CORE_SERIAL_TX_BUF
+#define XEWE_CORE_SERIAL_TX_BUF 2048
 #endif
 
-#ifndef BUILD_TIMESTAMP
-#define BUILD_TIMESTAMP __DATE__ " " __TIME__
+// Serial RX buffer (SerialPortConfig::rx_buffer_size), bytes; one input burst must fit
+#ifndef XEWE_CORE_SERIAL_RX_BUF
+#define XEWE_CORE_SERIAL_RX_BUF 1024
 #endif
 
-#ifndef BUILD_CHIP
-#define BUILD_CHIP "unknown"
+// Delay after opening the port (SerialPortConfig::startup_delay_ms), ms; 0 on a real UART
+#ifndef XEWE_CORE_SERIAL_DELAY_MS
+#define XEWE_CORE_SERIAL_DELAY_MS 1000
 #endif
 
-// Printed in the boot header. Override: xewe build --define 'PROJECT_URL="https://..."'
-#ifndef PROJECT_URL
-#define PROJECT_URL "https://github.com/xewe-labs/xewe-os"
+// Echo typed characters back (SerialPortConfig::echo), 0 or 1
+#ifndef XEWE_CORE_SERIAL_ECHO
+#define XEWE_CORE_SERIAL_ECHO 1
 #endif
 
-// Serial console baud rate (the tools' `xewe serial` defaults to 115200 as well).
-#ifndef SERIAL_BAUD_RATE
-#define SERIAL_BAUD_RATE 115200
+// Print the ASCII banner at boot (OsConfig::print_banner), 0 or 1
+#ifndef XEWE_CORE_PRINT_BANNER
+#define XEWE_CORE_PRINT_BANNER 1
 #endif
 
-// Module values. `./setup.sh` and `xewe modules select` append the compile-time values of every
-// selected module below, one marked block per module (`// ---- <slug> (xewe modules generate) ----`
-// to `// ---- end <slug> ----`). Edit the numbers; keep the markers. A block is added once and
-// never rewritten. `xewe build` passes this file to every translation unit, so the module sources
-// see your values.
+// ---- first-boot values ----
+
+// Device name (system/device_name), string literal, up to 254 characters; suggested at first boot
+// #define XEWE_CORE_DEVICE_NAME "xewe-os"
+
+// ---- compile-time constants ----
+
+// Serial line buffer (SerialPort::INPUT_BUFFER_SIZE), bytes including the terminator, 2 to 256
+#ifndef XEWE_CORE_INPUT_BUF_SIZE
+#define XEWE_CORE_INPUT_BUF_SIZE 255
+#endif
+
+// Completed input lines queued (SerialPort::INPUT_QUEUE_LINES), 1 to 255
+#ifndef XEWE_CORE_INPUT_QUEUE
+#define XEWE_CORE_INPUT_QUEUE 4
+#endif
+
+// AsyncTimer progress recompute interval, ms; 0 recomputes on every call
+#ifndef XEWE_CORE_TIMER_TICK_MS
+#define XEWE_CORE_TIMER_TICK_MS 5
+#endif
+// ---- end core ----
+
+// Module values. `./setup.sh` and `xewe modules select` append the values of every selected module
+// below, one marked block per module (`// ---- <slug> (xewe modules generate) ----` to
+// `// ---- end <slug> ----`). Edit the numbers; keep the markers. A block is added once and never
+// rewritten.
