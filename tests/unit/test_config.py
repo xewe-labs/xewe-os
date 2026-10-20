@@ -22,6 +22,16 @@ def _lines():
     return (ROOT / "Config.h").read_text().splitlines()
 
 
+def _blocks(lines):
+    """(start, end) of every generated block: the core block and one per selected module."""
+    starts = [
+        i for i, l in enumerate(lines) if l.endswith("(xewe modules generate) ----")
+    ]
+    ends = [i for i, l in enumerate(lines) if l.startswith("// ---- end ")]
+    assert len(starts) == len(ends) and all(s < e for s, e in zip(starts, ends))
+    return list(zip(starts, ends))
+
+
 @pytest.mark.unit
 def test_pragma_once_and_no_include():
     lines = _lines()
@@ -31,26 +41,33 @@ def test_pragma_once_and_no_include():
 
 @pytest.mark.unit
 def test_core_block_and_sections_in_order():
+    # the core block comes first; every block (core, then each selected module) carries the three
+    # section markers once, in order
     lines = _lines()
     assert lines.count(CORE_START) == 1 and lines.count(CORE_END) == 1
-    start, end = lines.index(CORE_START), lines.index(CORE_END)
-    assert start < end
-    positions = [lines.index(marker) for marker in SECTIONS]
-    assert all(lines.count(marker) == 1 for marker in SECTIONS)
-    assert start < positions[0] < positions[1] < positions[2] < end
+    blocks = _blocks(lines)
+    assert blocks and lines[blocks[0][0]] == CORE_START
+    for start, end in blocks:
+        block = lines[start:end]
+        assert all(block.count(marker) == 1 for marker in SECTIONS)
+        positions = [block.index(marker) for marker in SECTIONS]
+        assert positions[0] < positions[1] < positions[2]
 
 
 @pytest.mark.unit
 def test_first_boot_values_are_commented_out():
-    # a fresh project still asks at first boot: every first-boot line ships as a comment
+    # a fresh project still asks at first boot: every first-boot line of every block ships as a
+    # comment
     lines = _lines()
-    first, last = lines.index(SECTIONS[1]), lines.index(SECTIONS[2])
-    active = [
-        l
-        for l in lines[first + 1 : last]
-        if l.strip() and not l.lstrip().startswith("//")
-    ]
-    assert not active, active
+    for start, end in _blocks(lines):
+        block = lines[start:end]
+        first, last = block.index(SECTIONS[1]), block.index(SECTIONS[2])
+        active = [
+            l
+            for l in block[first + 1 : last]
+            if l.strip() and not l.lstrip().startswith("//")
+        ]
+        assert not active, active
 
 
 @pytest.mark.unit
