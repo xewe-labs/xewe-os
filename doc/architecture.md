@@ -1,9 +1,9 @@
 # Architecture
 
 Why XeWe OS is shaped the way it is. The [README](../README.md) says how to use it; this page says
-why it is four repositories, why the sketch has exactly one include, why modules carry an explicit
-declare line, what is decided versus still open, and where XeWe OS stands against the rest of the
-ESP32 ecosystem (section 8).
+why it is four repositories, why the sketch reaches the library through one include, why modules
+carry an explicit declare line, what is decided versus still open, and where XeWe OS stands
+against the rest of the ESP32 ecosystem (section 8).
 
 ## 1. Purpose and philosophy
 
@@ -36,7 +36,7 @@ with arduino-cli (D5).
 
 | Repo | Job | Boundary |
 |---|---|---|
-| [`xewe-os`](https://github.com/xewe-labs/xewe-os) | the firmware template users clone | its own code, `xewe.toml`, `setup.sh` and released firmware; `run.sh` is generated |
+| [`xewe-os`](https://github.com/xewe-labs/xewe-os) | the firmware template users clone | its own code, `xewe.toml` and `setup.sh`; its firmware images are GitHub Release assets; `run.sh` is generated |
 | [`xewe-os-core`](https://github.com/xewe-labs/xewe-os-core) | `XeWeCore`, the one Arduino library | reusable code every firmware needs; publishable on its own; depends only on ArduinoJson |
 | [`xewe-os-modules`](https://github.com/xewe-labs/xewe-os-modules) | every module, `modules/<slug>/` | features some firmware needs; the contract in `doc/contract.md`, the index in `doc/modules.md`; no toolchain of its own; built and tested through an `xewe-os` checkout (D21) |
 | [`xewe-os-tools`](https://github.com/xewe-labs/xewe-os-tools) | `xewe`, one Python package (`src/xewe/`) | everything that runs on the host: setup, build, flash, serial, test, release, format (the one C++ style file ships inside the package), brand-lint, webui (a Flask web UI prototype exported as PROGMEM headers). The spec is `doc/spec.md` |
@@ -78,12 +78,12 @@ project on the machine:
 └── .lock                                held while setup installs into the shared folder
 
 my-fw/
-├── xewe-os.ino              committed   #include <XeWeCore.h>; XeWeOs os({...}); your setup()/loop()
-├── Config.h                 committed   your defaults plus one appended block of compile-time values per
+├── xewe-os.ino              committed   #include "Config.h", <XeWeCore.h>; XeWeOs os({...}); your setup()/loop()
+├── Config.h                 committed   the core block (the core's values) plus one appended block per
 │                                        selected module (setup adds it once; you edit it)
 ├── xewe.toml                committed   the manifest: [project] [core] [modules] [tools] [libraries]
 ├── setup.sh                 committed   bootstraps build/tools/.venv, then calls `python -m xewe setup`
-├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules
+├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules, each with its Config.h
 ├── tests/board/  tests/unit/  committed  the project's tests (`xewe test`)
 ├── static/firmware/releases/  .gitkeep only  build output of `xewe release`; ignored, binaries are release assets (D26)
 ├── README.md  LICENSE.txt  doc/  .agents/  .github/workflows/ci.yml   committed
@@ -116,16 +116,21 @@ One library (D8), utils inside it (D16), laid out as a facade plus standalone co
 
 ```
 src/
-  XeWeCore.h                 umbrella: the only top-level header
+  XeWeCore.h                   umbrella: the only top-level header
   XeWeCore/
-    XeWeOs.h/.cpp            xewe::Os (global alias XeWeOs) and xewe::System
-    Module.h/.cpp            xewe::Module, the base class of every module
-    Serial.h/.cpp            xewe::SerialPort
-    Cli.h/.cpp               xewe::Cli: "$group command args", $help
-    Nvs.h/.cpp/.tpp          xewe::Nvs: typed key-value storage
-    FlexData.h               xewe::FlexData
-    Utils.h + Utils/*.h      header-only: String, AsyncTimer, Span, Color, LockGuard, ...
+    Config.h                   the core's configuration values (xewe-os-core doc/config.md)
+    Os/XeWeOs.{h,cpp}          xewe::Os (global alias XeWeOs) and xewe::System
+    Module/Module.{h,cpp}      xewe::Module, the base class of every module
+    Settings/Settings.{h,cpp}  xewe::Settings: the settings table of a module
+    Serial/Serial.{h,cpp}      xewe::SerialPort
+    Cli/Cli.{h,cpp}            xewe::Cli: "$group command args", $help
+    Nvs/Nvs.{h,cpp,tpp}        xewe::Nvs: typed key-value storage
+    Nvs/FlexData.h             xewe::FlexData
+    Utils/Utils.h + Utils/*.h  header-only: String, AsyncTimer, Span, Color, LockGuard, Pins, ...
+    Testing/Testing.{h,cpp}    the `$test` group of the board tests, only with XEWE_TESTING
 ```
+
+Each component folder except `Testing/` has a `README.md` that documents it.
 
 ```cpp
 #include <XeWeCore.h>
@@ -136,14 +141,17 @@ void loop()  { os.loop(); }   // os.cli, os.nvs, os.system.restart()
 
 The facade owns `os.serial`, `os.cli`, `os.nvs` and `os.system`. The components also work alone
 (`xewe::SerialPort`, `xewe::Cli`, `xewe::Nvs`, `xewe::FlexData`, `xewe::str`) with no `XeWeOs`.
-Everything is in `namespace xewe`; the include direction is Utils ← Serial ← Cli, FlexData ← Nvs,
-all ← Module ← XeWeOs.
+Everything is in `namespace xewe`; the include direction is Config.h ← Utils ← Serial ← Cli,
+Settings; FlexData ← Nvs; all ← Module ← XeWeOs.
 
-**Why `#include <XeWeCore.h>` is the only sketch include.** arduino-cli discovers which library to
-compile by trying the sketch's includes against each library's top-level `src/` headers. A sketch
-whose only include is `<XeWeCore/XeWeOs.h>` fails with "No such file": the sub-header is not a
-top-level header, so the library is never added (arduino-cli 1.5.1). Sub-headers may be included
-*after* the umbrella.
+**Why `#include <XeWeCore.h>` is the sketch's one library include.** arduino-cli discovers which
+library to compile by trying the sketch's includes against each library's top-level `src/` headers.
+A sketch whose only include is `<XeWeCore/Os/XeWeOs.h>` fails with "No such file": the sub-header
+is not a top-level header, so the library is never added (arduino-cli 1.5.1). Sub-headers may be
+included *after* the umbrella. The sketch's other includes are its own files: `Config.h` comes
+first, before the umbrella, so a plain Arduino IDE build reads the project's values too (`xewe
+build` puts it in front of every source file anyway), and `src/Modules.h` and the project-local
+modules come after the `XeWeOs os(...)` line.
 
 Three names are shaped by the Arduino core's macros: the serial type is `xewe::SerialPort` (the
 core defines `Serial` as a macro), the member `os.cli` is brace-initialised and never followed by
@@ -219,13 +227,13 @@ elsewhere. The tools never read or write `~/.arduino15` or `~/Arduino`.
 | `xewe-os-core` | semver in `library.properties` | `X.Y.Z` (un-prefixed, Arduino registry rule) | `scripts/release.sh`; the Library Manager picks up the tag |
 | `xewe-os-modules` | per module (`module.properties`) and the set | `<module>/X.Y.Z` per module, `X.Y.Z` for the set | `scripts/release.sh`; each module declares `requires_core`, for example `>=3.0.0,<4.0.0` |
 | `xewe-os-tools` | `pyproject.toml` | `X.Y.Z` | `scripts/release.sh` |
-| `xewe-os` | `xewe.toml [project] version`, independent | `X.Y.Z` | `scripts/release.sh` runs the tests once, renders `release_card.md` and tags; CI builds and publishes the GitHub Release with the images, the card and the notes as assets (D26, D27) |
+| `xewe-os` | `xewe.toml [project] version`, independent | `X.Y.Z` | `scripts/release.sh` runs the tests once, renders `release_card.md` and tags; CI builds and publishes the GitHub Release with the images and the card as assets and the notes as the Release text (D26, D27) |
 
 Tags carry no `v` from 3.0.0 on (older `v` tags keep their names).
 
 **Refs: pinned to tags, 3.1.0 generation.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or
 `latest`, the newest commit of the repository's default branch. The template pins core `3.1.0`,
-tools `3.1.0`, modules `3.0.0` until the modules set is tagged 3.1.0, and ArduinoJson `v7.4.3`; the
+tools `3.1.2`, modules `3.0.0` until the modules set is tagged 3.1.0, and ArduinoJson `v7.4.3`; the
 whole ecosystem releases 3.1.0 in dependency order (tools, core, modules, `xewe-os`, then the
 product). A project moves its refs with `xewe manifest update` (newest tag), and a new core or
 modules release reaches a project only when its manifest moves. `.github/workflows/ci.yml` calls
@@ -280,13 +288,13 @@ unused.
 | D25 | **One repo layout** | `README.md` and `LICENSE.txt` are the only reader files at a root; pages live in `doc/`; the C++ style ships with the tools; `run.sh` is written by `setup.sh` and never committed |
 | D26 | **Binaries are GitHub Release assets only, never committed** | A release publishes each image as an asset with a direct URL (`https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>`); nothing is committed back to `main`, so the tag is the source and the Release is the binary. Git LFS is for `static/media/**` only. `static/firmware/releases/` holds `.gitkeep`; the CI lint `No committed firmware` fails on anything else. Branch publishing (`publish_branch`, `releases_branch`) is deprecated and off |
 | D27 | **Every release has a generated `release_card.md`** | `scripts/release.sh` produces it from one complete run (setup, validation, unit, board per chip, builds, lint) with `xewe release-card`; no hand-written cards. The card records what ran on which commit and tree, every test per chip, and what was not covered (chips without a hardware run are stated as compile only). It is a release asset. The run logs stay in `releases/X.Y.Z/logs/`, local and gitignored; the card lists their names, sizes and sha256 but links none. CI verifies the card against the tagged tree and fails on a mismatch |
-| D28 | **Project-local modules in a product's `src/` are first class** | A module in `src/<Name>/` has the same `xewe::Module` API, contract, tests and NVS namespace rules as one from `xewe-os-modules`; it is declared in the sketch and needs no entry in the modules repo. `src/YourModule/` (smallest) and `src/YourModuleFull/` (every hook) are the patterns. A module that other firmwares need moves to the modules repo (D4) |
+| D28 | **Project-local modules in a product's `src/` are first class** | A module in `src/<Name>/` has the same `xewe::Module` API, contract, tests and NVS namespace rules as one from `xewe-os-modules`; it is declared in the sketch and needs no entry in the modules repo. Its values are in its own `src/<Folder>/Config.h` in the module form of the core's `doc/config.md`, prefixed `XEWE_<ID>_` (the module id in upper case), edited in place. `src/YourModule/` (smallest) and `src/YourModuleFull/` (every hook) are the patterns. A module that other firmwares need moves to the modules repo (D4) |
 
 Open and deferred:
 
 | Item | State |
 |---|---|
-| CI strictness and release publishing | settled at 3.1.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release with the images, the card and the notes as assets; nothing is committed to `main` (D26) |
+| CI strictness and release publishing | settled at 3.1.0: each repo calls the tools' reusable workflows at a tag; in the template lint blocks (`strict_lint: true`) and a release publishes a GitHub Release with the images and the card as assets and the notes as the Release text; nothing is committed to `main` (D26) |
 | laptop-cooling-pad migration | on hold; first real consumer once the backbone is published |
 | xewe-led-os migration | out of scope for now; after the backbone is proven |
 | Self-describing device | proposed (§8): one command that dumps every module's commands and settings schema as machine-readable JSON; `$<id> schema` per module exists, the device-wide manifest does not |

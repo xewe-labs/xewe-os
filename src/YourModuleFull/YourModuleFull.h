@@ -3,11 +3,12 @@
 // xewe-os/src/YourModuleFull/YourModuleFull.h
 //
 // Project-local module, the full tour: it overrides every hook of xewe::Module and shows each
-// pattern once (config struct, init-setup prompt, a settings table with a SECRET and a RESTART row,
-// a FlexData blob with a schema reported through schema_extra, timed loop action, a same-name
-// command with two arg counts, a GPIO claim, report_error, a listener set).
-// Copy what you need into your own module and delete the rest. For the minimal version see
-// src/YourModule/. Reference: XeWeCore doc/os/module.md, doc/os/settings.md, doc/utils/pins.md.
+// pattern once (a Config.h with a first-boot value, init-setup prompt, a settings table with a
+// SECRET and a RESTART row, a FlexData blob with a schema reported through schema_extra, timed
+// loop action, a same-name command with two arg counts, a GPIO claim, report_error, a listener
+// set). Copy what you need into your own module and delete the rest. For the minimal version see
+// src/YourModule/. Reference, in xewe-os-core: src/XeWeCore/Module/README.md,
+// src/XeWeCore/Settings/README.md, src/XeWeCore/Utils/README.md#xewepins.
 #pragma once
 
 #include <string>
@@ -15,13 +16,10 @@
 
 #include <XeWeCore.h>
 
-// Compile-time settings, passed from the sketch: YourModuleFull m(os, {.tick_ms = 5000});
-// They never change at run time and are not stored; anything the user changes goes to NVS below.
-struct YourModuleFullConfig {
-    uint32_t tick_ms = 10000; // loop(): period of the timed action
-    bool print_ticks = false; // loop(): print a line on every tick
-    uint32_t prompt_timeout_ms = 30000; // init-setup prompt: per attempt; 0 would wait forever
-};
+// The module's values: Config.h in this folder. Runtime defaults are the table defaults, the
+// first-boot level is asked for (or pre-answered by the build), and the compile-time constants
+// (tick period, tick printing, prompt timeout) never change at run time and are not stored.
+#include "Config.h"
 
 // Plain settings are table rows (YourModuleFull.cpp, settings()). What is not one value per key
 // goes in ONE FlexData blob (key "presets" in namespace "your_mod_full"). FlexData writes the
@@ -48,7 +46,7 @@ struct LevelListener {
 class YourModuleFull : public xewe::Module {
 public:
     // Name the Os parameter `host`, never `os` (it would hide the protected member `os`).
-    explicit YourModuleFull(xewe::Os& host, YourModuleFullConfig config = {});
+    explicit YourModuleFull(xewe::Os& host);
 
     // ---- begin: os.begin() calls Module::begin(), which loads the table, then calls these ----
     // (none run while the module is disabled, or while a required module is disabled)
@@ -86,12 +84,12 @@ private:
     void load_presets();
     void save_presets();
 
-    YourModuleFullConfig config;
-    uint16_t level = 50; // table rows; NVS keys = row keys
-    bool active = true;
+    // table rows; NVS keys = row keys, defaults from Config.h
+    uint16_t level = XEWE_YOUR_MOD_FULL_LEVEL;
+    bool active = XEWE_YOUR_MOD_FULL_ACTIVE;
     std::string label;
     std::string token; // SECRET: never printed
-    uint8_t pin = 255; // RESTART: claimed at boot; 255 = none
+    uint8_t pin = XEWE_YOUR_MOD_FULL_PIN; // RESTART: claimed at boot; 255 = none
     YourModuleFullPresets presets;
     bool presets_owned = true; // false: NVS holds a blob we must not touch
     bool pin_claimed = false;

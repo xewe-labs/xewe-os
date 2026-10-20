@@ -48,7 +48,7 @@
 // ---- first-boot values ----
 
 // Device name (system/device_name), string literal, up to 254 characters; suggested at first boot
-// #define XEWE_CORE_DEVICE_NAME "xewe-os"
+// #define XEWE_CORE_DEVICE_NAME "xewe-device"
 
 // ---- compile-time constants ----
 

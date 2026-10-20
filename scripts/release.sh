@@ -18,8 +18,9 @@
 #     paths, any change outside the version lines (VERSION_LOCATIONS) and releases/<version>/, a
 #     releases/<version>/testcard.md, a .gitignore that does not ignore releases/*/logs/, and any
 #     tracked file under static/firmware/releases/ besides .gitkeep (images are release assets
-#     only); checks that ci.yml calls the tools workflows at the [tools] ref of xewe.toml (a tag,
-#     unless XEWE_TOOLS_SOURCE is set) and finds Python >= 3.11;
+#     only), and an active INJECTED_FROM_DOTENV line in Config.h (`xewe release` refuses it, so
+#     the run stops before the card run); checks that ci.yml calls the tools workflows at the
+#     [tools] ref of xewe.toml (a tag, unless XEWE_TOOLS_SOURCE is set) and finds Python >= 3.11;
 #   2 versions: every VERSION_LOCATIONS line set to <version>;
 #   3 release notes: releases/<version>/notes.txt (the GitHub Release text and the tag message); a
 #     missing one gets a skeleton, and while its skeleton marker line is there the run stops with
@@ -217,6 +218,10 @@ tree_problems() {
   fw="$(tracked_firmware)"
   [[ -z "${fw}" ]] \
     || echo "${FIRMWARE}/ tracks files besides .gitkeep (images are release assets only, D26; git rm -r --cached them): $(tr '\n' ' ' <<< "${fw}")"
+  # an active sentinel takes a value from the dotenv file, and `xewe release` refuses that Config.h
+  [[ ! -f Config.h ]] || grep -nE '^[[:space:]]*#[[:space:]]*define[[:space:]]+[[:alnum:]_]+[[:space:]]+INJECTED_FROM_DOTENV' Config.h \
+    | sed -E 's/^([0-9]+):[[:space:]]*(.*)$/Config.h:\1: active INJECTED_FROM_DOTENV line, a release image takes no dotenv value (comment it out or write the value): \2/' \
+    || true
 }
 
 # workflow_refs: print "<ref of the tools workflows in ci.yml> <[tools] ref of xewe.toml>".
@@ -482,7 +487,8 @@ prepare() {
       fail "${x}"
     fi
   fi
-  echo "   tools: $(tools_spec) (CI: the tools workflows at ${TOOLS_REF})"
+  x="$(workflow_refs)"
+  echo "   tools: $(tools_spec) (CI: the tools workflows at ${x% *})"
   for x in CORE MODULES TOOLS; do
     loc="XEWE_${x}_SOURCE"
     [[ -z "${!loc:-}" ]] || { echo "   ${loc}=${!loc} (passed to ./setup.sh)"; env_src+=("${loc}=${!loc}"); }

@@ -8,17 +8,14 @@
 
 #include <XeWeCore.h>
 
-// Settings fixed at compile time, passed from the sketch: YourModule your_module(os, {.heartbeat =
-// false});
-struct YourModuleConfig {
-    bool heartbeat = true; // print the number every beat_s seconds from loop()
-};
+// The module's values (defaults of the table rows, the heartbeat switch): Config.h in this folder.
+#include "Config.h"
 
 class YourModule : public xewe::Module {
 public:
     // Name the Os parameter `host`, never `os`: `os` is the protected member that the
     // method bodies and the [this] command lambdas use.
-    explicit YourModule(xewe::Os& host, YourModuleConfig config = {});
+    explicit YourModule(xewe::Os& host);
 
     // begin: the Os calls the begin_routines_* hooks from os.begin(), in declaration order.
     //   begin_routines_required()  every boot, first
@@ -41,8 +38,8 @@ public:
     void set_number(uint16_t value);
 
 private:
-    YourModuleConfig config;
-    uint16_t number = 0; // table rows; NVS keys "number", "beat_s" in namespace "your_module"
-    uint16_t beat_s = 10;
+    // table rows (NVS keys "number", "beat_s" in namespace "your_module"), defaults from Config.h
+    uint16_t number = XEWE_YOUR_MODULE_NUMBER;
+    uint16_t beat_s = XEWE_YOUR_MODULE_BEAT_S;
     uint32_t last_beat_ms = 0;
 };

@@ -126,8 +126,10 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
 
 ### Code notes
 
-- The sketch includes `<XeWeCore.h>` (the umbrella); `XeWeOs os({...})` is declared before any
-  module; `src/Modules.h` is included after it, then the project-local modules.
+- The sketch includes `"Config.h"` first, then `<XeWeCore.h>` (the umbrella, its one library
+  include); `XeWeOs os({...})` is declared before any module; `src/Modules.h` is included after it,
+  then the project-local modules (`YourModule your_module(os);`, `YourModuleFull
+  your_module_full(os);`).
 - `Config.h` includes nothing: `xewe build` puts the generated `XeWeBuildInfo.h`, then `Config.h`,
   then the generated `XeWeOverrides.h` in front of every source file (`-include`). It holds the core
   block and one block per selected module; spec: xewe-os-core `doc/config.md`.
@@ -135,6 +137,11 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
 - `src/YourModule/` and `src/YourModuleFull/` are teaching code: their comments explain the
   `xewe::Module` API to a reader, and they must keep compiling against the current core. When the
   core's module API changes, update them and the README's console walk-through together.
+- A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
+  core's `doc/config.md` (three section markers, `#ifndef` groups, `_PROMPT` only on a first-boot
+  value), named `XEWE_<ID>_*` with the module id in upper case (`XEWE_YOUR_MODULE_*`,
+  `XEWE_YOUR_MOD_FULL_*`). The user edits it in place; `xewe modules generate` never touches it.
+  The heartbeat of `YourModule` is off by default (`XEWE_YOUR_MODULE_HEARTBEAT 0`).
 - Module code rules (constructor parameter `host`, `[this]` captures, never `cli(`, ids ≤ 15
   characters) are in the modules repository's `doc/contract.md` and `.agents/RULES.md`; they apply to
   project-local modules too.

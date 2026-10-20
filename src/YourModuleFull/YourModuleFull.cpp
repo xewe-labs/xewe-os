@@ -6,7 +6,7 @@
 // and what the core does around it. Delete what you do not need; every hook is optional.
 #include "YourModuleFull.h"
 
-YourModuleFull::YourModuleFull(xewe::Os& host, YourModuleFullConfig config)
+YourModuleFull::YourModuleFull(xewe::Os& host)
     : Module(host, // registers with the Os now; the sketch's declaration order is the begin order
           /* id                  */ "your_mod_full", // CLI group ($your_mod_full) and NVS
                                                      // namespace: <= 15 chars, so not
@@ -21,24 +21,27 @@ YourModuleFull::YourModuleFull(xewe::Os& host, YourModuleFullConfig config)
           /* has_cli_commands    */ true) // creates the group, adds status / reset;
                                           // register_command() works
       ,
-      config(config), tick_timer(config.tick_ms) {
+      tick_timer(XEWE_YOUR_MOD_FULL_TICK_MS) {
     // Runs during static construction: Serial is not up and NVS is not read yet, so only
     // store things and register commands here. Anything that talks or reads goes in begin_*.
     register_commands();
 }
 
 // The settings table: one row per plain setting, checked at compile time (key <= 15
-// chars, default inside [min, max]). The core loads it at begin (default, then NVS), adds
+// chars, default inside [min, max]). The defaults come from Config.h (the level is its first-boot
+// value). The core loads the table at begin (default, then NVS), adds
 // `$your_mod_full set|get|schema`, one status line per row and the rows of `$system schema`.
 xewe::Settings YourModuleFull::settings() const {
     static constexpr xewe::SettingDef table[] = {
-        xewe::setting<&YourModuleFull::level>("level", 0, 100, 50, "Level, %"),
-        xewe::setting<&YourModuleFull::active>("active", true, "Count ticks"),
-        xewe::setting<&YourModuleFull::label>("label", 15, "hello", "Shown at boot"),
+        xewe::setting<&YourModuleFull::level>(
+            "level", 0, 100, XEWE_YOUR_MOD_FULL_LEVEL, "Level, %"),
+        xewe::setting<&YourModuleFull::active>("active", XEWE_YOUR_MOD_FULL_ACTIVE, "Count ticks"),
+        xewe::setting<&YourModuleFull::label>(
+            "label", 15, XEWE_YOUR_MOD_FULL_LABEL, "Shown at boot"),
         xewe::setting<&YourModuleFull::token>(
             "token", 31, "", "API token", xewe::SettingDef::SECRET),
         xewe::setting<&YourModuleFull::pin>(
-            "pin", 0, 255, 255, "Tick LED GPIO, 255 = none", xewe::SettingDef::RESTART),
+            "pin", 0, 255, XEWE_YOUR_MOD_FULL_PIN, "GPIO, 255 = none", xewe::SettingDef::RESTART),
     };
     return {table, this};
 }
@@ -70,16 +73,23 @@ void YourModuleFull::begin_routines_required() {
 // First boot (and after `$your_mod_full reset` or disable/enable, which wipe init_complete).
 // After it returns, the core writes init_complete = true unless this routine disabled the module.
 // Prompts are allowed here (setup time) but must be bounded: a headless device must still boot.
+// XEWE_YOUR_MOD_FULL_LEVEL_PROMPT exists only while nothing in the build set the level
+// (Config.h of this folder): then the user is asked, else the build's level is the answer.
 void YourModuleFull::begin_routines_init() {
+#ifdef XEWE_YOUR_MOD_FULL_LEVEL_PROMPT
     bool answered = false;
     uint16_t value = os.serial.get_uint16("Starting level (0-100)?", 0, 100,
         2, // two attempts
-        config.prompt_timeout_ms, // per attempt
-        level, // returned on timeout
+        XEWE_YOUR_MOD_FULL_PROMPT_TIMEOUT_MS, // per attempt
+        XEWE_YOUR_MOD_FULL_LEVEL, // the suggestion, returned on timeout
         answered);
     if (!answered)
-        os.serial.printf("No answer: level stays %u", level);
+        os.serial.printf("No answer: level stays %u", value);
     set_level(value); // saves to NVS and tells the listeners
+#else
+    // no question: saves the build's level and tells the listeners
+    set_level(XEWE_YOUR_MOD_FULL_LEVEL);
+#endif
 }
 
 // Every later boot (init already completed). Typical: reconnect, restore state, say hello.
@@ -100,11 +110,11 @@ void YourModuleFull::begin_routines_common() {
 void YourModuleFull::loop() {
     if (!active || tick_timer.is_not_done())
         return;
-    tick_timer.initiate(); // restart: the next tick is config.tick_ms from now
+    tick_timer.initiate(); // restart: the next tick is XEWE_YOUR_MOD_FULL_TICK_MS from now
     ++ticks;
     if (pin_claimed)
         digitalWrite(pin, ticks & 1);
-    if (config.print_ticks)
+    if (XEWE_YOUR_MOD_FULL_PRINT_TICKS)
         os.serial.printf("%s: tick %lu", name.c_str(), (unsigned long)ticks);
 }
 

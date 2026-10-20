@@ -6,7 +6,9 @@ src/Modules.h
 /run.sh
 
 # Credentials and settings for xewe provision/test; yours to create (the tools README lists the keys).
+# The dot-suffixed variants (per bench, per board) are ignored too.
 .env
+.env.*
 
 # Release images are GitHub Release assets and are never committed (doc/architecture.md D26);
 # only the .gitkeep placeholder stays. releases/<version>/logs/ are local run logs (D27).

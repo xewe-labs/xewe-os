@@ -79,7 +79,7 @@ project and re-run reuses them and takes seconds. Already have the esp32 core? `
 **First boot.** `./run.sh` erases the whole flash before flashing, NVS included, so every run is a
 true first boot. The board then asks, on the console:
 
-1. `Name your device` (and `Confirm`);
+1. `Name your device (Enter for "xewe-device"):` (and `Confirm`);
 2. for each module, in declaration order: `Would you like to enable <Name> module?` (for a module
    that can be disabled), then that module's own setup (Wi-Fi network and password, timezone, or
    the example module's `Starting level (0-100)?`);
@@ -111,7 +111,7 @@ build/tools/.venv/bin/python -m xewe --help                 # everything: flash,
 ## No board? Still works
 
 `./run.sh`, `xewe flash` and `xewe test` compile, then print
-`compiled, not run: no board attached (c3, build/builds/c3/out/2.0.0-c3-xewe-os.bin)` and exit 0.
+`compiled, not run: no board attached (c3, build/builds/c3/out/3.0.0-c3-xewe-os.bin)` and exit 0.
 `xewe test` runs the unit tests and reports board tests as "compiled, not run". Set
 `XEWE_NO_BOARD=1` for compile-only sessions (CI, agents): no port is ever opened, even with a board
 plugged in.
@@ -126,7 +126,7 @@ and `tests/unit/` (on the developer machine: `@pytest.mark.unit` Python, or C++ 
 
 | | Paths |
 |---|---|
-| Committed | `xewe-os.ino`, `Config.h` (your settings; `./setup.sh` appends one marked block of compile-time values per selected module, which you edit in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/media/` (Git LFS, `.gitattributes`), `static/firmware/releases/.gitkeep`, `releases/<version>/` (`notes.txt` and the generated `release_card.md`), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
+| Committed | `xewe-os.ino`, `Config.h` (your settings: the core block with the core's values, and one marked block per selected module that `./setup.sh` appends; you edit both in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/media/` (Git LFS, `.gitattributes`), `static/firmware/releases/.gitkeep`, `releases/<version>/` (`notes.txt` and the generated `release_card.md`), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
 | Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again); `releases/<version>/logs/` are local run logs, ignored |
 | Ignored, yours | `.env`: the credentials `xewe provision` reads, optional; you create it here or in the tools checkout (`./setup.sh` says where and which keys when there is none, and never writes one) |
 | Shared, outside the project | `~/.xewe-os/build-tools/`: deleting it only means the next setup downloads it again |
@@ -137,7 +137,7 @@ No submodules. The full `build/` tree is in [doc/architecture.md](doc/architectu
 ## Versions and settings
 
 `xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries:
-core `3.1.0`, modules `3.0.0` (moves to `3.1.0` once the modules set is tagged), tools `3.1.1`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
+core `3.1.0`, modules `3.0.0` (moves to `3.1.0` once the modules set is tagged), tools `3.1.2`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
 follows the default branch; `xewe manifest update` moves the refs to the newest tags. The ref
 policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
 
@@ -195,16 +195,30 @@ a module in this project's `src/` uses the same `xewe::Module` API and contract 
 modules repository, with its own `$group` and NVS namespace, and needs no entry anywhere else.
 `src/YourModuleFull/` is the pattern to copy; `src/YourModule/` is the smallest form.
 
-Two project-local example modules are declared in `xewe-os.ino`, after the generated ones. They
-are yours; setup never touches them.
+Two project-local example modules are declared in `xewe-os.ino`, after the generated ones
+(`YourModule your_module(os);`, `YourModuleFull your_module_full(os);`). They are yours; setup
+never touches them.
+
+A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
+[configuration spec](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md): pure
+preprocessor, the three section markers (runtime defaults, first-boot values, compile-time
+constants), one `#ifndef` group per value. Its names start with `XEWE_<ID>_`, the module id in
+upper case: `XEWE_YOUR_MODULE_` for `your_module`, `XEWE_YOUR_MOD_FULL_` for `your_mod_full`. You
+edit that file in place; `xewe modules generate` never touches a project-local module, so its
+values get no block in the project's `Config.h`. A `--define` or a line in the project's
+`Config.h` still wins over it.
 
 - **`src/YourModule/`** (`$your_module`): the smallest complete module. A two-row settings table
-  (`number`, `beat_s`, which gives it `set`/`get`/`schema` and the status lines), one command of its
-  own (`show`) and one compile-time setting. Copy this one for a simple module.
+  (`number`, `beat_s`, which gives it `set`/`get`/`schema` and the status lines; their defaults are
+  `XEWE_YOUR_MODULE_NUMBER` and `XEWE_YOUR_MODULE_BEAT_S`), one command of its own (`show`) and one
+  compile-time constant, `XEWE_YOUR_MODULE_HEARTBEAT`: 0 by default, 1 prints the number every
+  `beat_s` seconds. Copy this one for a simple module.
 - **`src/YourModuleFull/`** (`$your_mod_full`; ids are NVS namespaces, at most 15 characters): the
   full tour. It overrides every `xewe::Module` hook (all four `begin_routines_*`, `loop`, `enable`,
-  `disable`, `reset`, `status`) and shows a config struct, a bounded first-boot prompt, a settings
-  table with a `SECRET` row (`token`, never printed) and a `RESTART` row (`pin`),
+  `disable`, `reset`, `status`) and shows a `Config.h` with all three sections, a bounded
+  first-boot prompt for the first-boot value `XEWE_YOUR_MOD_FULL_LEVEL` (asked only under
+  `XEWE_YOUR_MOD_FULL_LEVEL_PROMPT`; `--define 'XEWE_YOUR_MOD_FULL_LEVEL=70'` pre-answers it), a
+  settings table with a `SECRET` row (`token`, never printed) and a `RESTART` row (`pin`),
   `on_setting_changed`, a FlexData blob with a `schema` field checked with `has()` (a foreign blob
   is never overwritten) and reported through `schema_extra`, a GPIO claimed in the core pin
   registry, an `AsyncTimer` in `loop`, `validate<>`, one command name with two argument counts,
@@ -213,8 +227,8 @@ are yours; setup never touches them.
 
 Both examples are tested by `xewe test` (`tests/board/` and `tests/unit/test_examples.py`).
 
-Rename the folder, the class and the id, or delete a folder and its lines in `xewe-os.ino`. Plain
-code can also go in `setup()`/`loop()` of `xewe-os.ino`.
+Rename the folder, the class, the id and the prefix of its `Config.h`, or delete a folder and its
+lines in `xewe-os.ino`. Plain code can also go in `setup()`/`loop()` of `xewe-os.ino`.
 
 Flash it, open the console and try:
 

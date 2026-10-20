@@ -12,9 +12,11 @@
 // - Your own module: src/YourModule/ (minimal) or src/YourModuleFull/ (every hook; project-local,
 //   setup never touches them).
 
-#include <XeWeCore.h>
-
+// Before <XeWeCore.h>: a plain Arduino IDE build then reads Config.h too; xewe build already puts
+// it first.
 #include "Config.h"
+
+#include <XeWeCore.h>
 
 // The Os comes first: modules register themselves with it from their constructors.
 // Name, version, timestamp and serial settings come from Config.h and the build.

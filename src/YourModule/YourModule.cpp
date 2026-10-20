@@ -8,7 +8,7 @@
 // not run and set_number() refuses. `$your_module enable` brings it back.
 #include "YourModule.h"
 
-YourModule::YourModule(xewe::Os& host, YourModuleConfig config)
+YourModule::YourModule(xewe::Os& host)
     : Module(host, // registers this module with the Os, right here
           /* id                  */ "your_module", // command group ($your_module ...) and NVS
                                                    // namespace; <= 15 chars
@@ -16,9 +16,7 @@ YourModule::YourModule(xewe::Os& host, YourModuleConfig config)
           /* description         */ "Remembers one number in NVS",
           /* requires_init_setup */ false, // true would run begin_routines_init() once
           /* can_be_disabled     */ true, // adds $your_module enable / disable
-          /* has_cli_commands    */ true) // adds $your_module status / reset, allows our own
-      ,
-      config(config) {
+          /* has_cli_commands    */ true) { // adds $your_module status / reset, allows our own
     // `$your_module set number 42` / `get number` / `schema` come from the table below.
     // $your_module show: our own command, no arguments; the Cli checks the count.
     register_command({"show", "Print the stored number", "$your_module show", 0,
@@ -26,17 +24,20 @@ YourModule::YourModule(xewe::Os& host, YourModuleConfig config)
 }
 
 xewe::Settings YourModule::settings() const {
-    // one row per setting: key (= NVS key, <= 15 chars), min, max, default, doc; checked at build
-    // time
+    // one row per setting: key (= NVS key, <= 15 chars), min, max, default (from Config.h), doc;
+    // checked at build time
     static constexpr xewe::SettingDef table[] = {
-        xewe::setting<&YourModule::number>("number", 0, 1000, 0, "The remembered number"),
-        xewe::setting<&YourModule::beat_s>("beat_s", 1, 3600, 10, "Heartbeat period, s"),
+        xewe::setting<&YourModule::number>(
+            "number", 0, 1000, XEWE_YOUR_MODULE_NUMBER, "The remembered number"),
+        xewe::setting<&YourModule::beat_s>(
+            "beat_s", 1, 3600, XEWE_YOUR_MODULE_BEAT_S, "Heartbeat period, s"),
     };
     return {table, this};
 }
 
 void YourModule::loop() {
-    if (!config.heartbeat || millis() - last_beat_ms < beat_s * 1000UL)
+    // XEWE_YOUR_MODULE_HEARTBEAT is 0 by default: build with it at 1 to see the beat
+    if (!XEWE_YOUR_MODULE_HEARTBEAT || millis() - last_beat_ms < beat_s * 1000UL)
         return; // non-blocking timer
     last_beat_ms = millis();
     os.serial.printf("your_module: number is %u", number);
