@@ -8,71 +8,77 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]  # the project: tests/unit/ -> tests/ -> root
-CORE_START = "// ---- core (xewe modules generate) ----"
-CORE_END = "// ---- end core ----"
+START = re.compile(r"^/\* ---- start ([a-z0-9-]+) ---- \*/$")
 SECTIONS = (
-    "// ---- runtime defaults ----",
-    "// ---- first-boot values ----",
-    "// ---- compile-time constants ----",
+    "/* ---- start default runtime values ---- */",
+    "/* ---- end default runtime values ---- */",
+    "/* ---- start compile time defined constants ---- */",
+    "/* ---- end compile time defined constants ---- */",
 )
 SENTINEL = re.compile(r"^\s*#\s*define\s+\w+\s+INJECTED_FROM_DOTENV", re.M)
 
 
-def _lines():
-    return (ROOT / "Config.h").read_text().splitlines()
+def _text():
+    return (ROOT / "Config.h").read_text()
+
+
+def _bar(marker):
+    return "/*" + "*" * (len(marker) - 4) + "*/"
 
 
 def _blocks(lines):
-    """(start, end) of every generated block: the core block and one per selected module."""
-    starts = [
-        i for i, l in enumerate(lines) if l.endswith("(xewe modules generate) ----")
-    ]
-    ends = [i for i, l in enumerate(lines) if l.startswith("// ---- end ")]
-    assert len(starts) == len(ends) and all(s < e for s, e in zip(starts, ends))
-    return list(zip(starts, ends))
+    """(slug, first line, last line) of every block, from its opening bar to its closing bar."""
+    blocks = []
+    for i, line in enumerate(lines):
+        match = START.match(line)
+        if match:
+            slug = match.group(1)
+            blocks.append((slug, i - 1, lines.index(f"/* ---- end {slug} ---- */") + 1))
+    return blocks
 
 
 @pytest.mark.unit
 def test_pragma_once_and_no_include():
-    lines = _lines()
+    lines = _text().splitlines()
     assert "#pragma once" in lines
     assert not [l for l in lines if re.match(r"\s*#\s*include\b", l)]
 
 
 @pytest.mark.unit
-def test_core_block_and_sections_in_order():
-    # the core block comes first; every block (core, then each selected module) carries the three
-    # section markers once, in order
-    lines = _lines()
-    assert lines.count(CORE_START) == 1 and lines.count(CORE_END) == 1
+def test_core_block_first_and_blocks_framed():
+    lines = _text().splitlines()
     blocks = _blocks(lines)
-    assert blocks and lines[blocks[0][0]] == CORE_START
-    for start, end in blocks:
-        block = lines[start:end]
-        assert all(block.count(marker) == 1 for marker in SECTIONS)
-        positions = [block.index(marker) for marker in SECTIONS]
-        assert positions[0] < positions[1] < positions[2]
+    assert blocks and blocks[0][0] == "core"
+    assert len({slug for slug, _, _ in blocks}) == len(blocks)
+    for slug, first, last in blocks:
+        start, end = f"/* ---- start {slug} ---- */", f"/* ---- end {slug} ---- */"
+        block = lines[first : last + 1]
+        assert block[:3] == [_bar(start), start, _bar(start)]
+        assert block[-3:] == [_bar(end), end, _bar(end)]
+        assert [l for l in block if l in SECTIONS] == list(SECTIONS)
 
 
 @pytest.mark.unit
-def test_first_boot_values_are_commented_out():
-    # a fresh project still asks at first boot: every first-boot line of every block ships as a
-    # comment
-    lines = _lines()
-    for start, end in _blocks(lines):
-        block = lines[start:end]
-        first, last = block.index(SECTIONS[1]), block.index(SECTIONS[2])
-        active = [
-            l
-            for l in block[first + 1 : last]
-            if l.strip() and not l.lstrip().startswith("//")
-        ]
-        assert not active, active
+def test_every_generated_line_is_a_comment():
+    lines = _text().splitlines()
+    for _, first, last in _blocks(lines):
+        for line in lines[first : last + 1]:
+            assert (
+                not line.strip()
+                or (line.startswith("/*") and line.endswith("*/"))
+                or line.startswith("// ")
+            ), line
+
+
+@pytest.mark.unit
+def test_nothing_active_but_pragma_once():
+    directives = [l for l in _text().splitlines() if re.match(r"\s*#", l)]
+    assert directives == ["#pragma once"]
 
 
 @pytest.mark.unit
 def test_no_prompt_build_macro_or_sentinel():
-    text = (ROOT / "Config.h").read_text()
+    text = _text()
     # only a module's own Config.h defines <NAME>_PROMPT
     assert "_PROMPT" not in text
     # build macros come from the generated XeWeBuildInfo.h, never from this file

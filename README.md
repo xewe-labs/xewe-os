@@ -126,7 +126,7 @@ and `tests/unit/` (on the developer machine: `@pytest.mark.unit` Python, or C++ 
 
 | | Paths |
 |---|---|
-| Committed | `xewe-os.ino`, `Config.h` (your settings: the core block with the core's values, and one marked block per selected module that `./setup.sh` appends; you edit both in place), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/media/` (Git LFS, `.gitattributes`), `static/firmware/releases/.gitkeep`, `releases/<version>/` (`notes.txt` and the generated `release_card.md`), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
+| Committed | `xewe-os.ino`, `Config.h` (a catalogue: the core block and one block per selected module that `./setup.sh` appends; uncomment a `#define` line to override a default), `xewe.toml`, `setup.sh`, `src/YourModule/`, `src/YourModuleFull/`, `tests/`, `static/media/` (Git LFS, `.gitattributes`), `static/firmware/releases/.gitkeep`, `releases/<version>/` (`notes.txt` and the generated `release_card.md`), `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml`, `.agents/` |
 | Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again); `releases/<version>/logs/` are local run logs, ignored |
 | Ignored, yours | `.env`: the credentials `xewe provision` reads, optional; you create it here or in the tools checkout (`./setup.sh` says where and which keys when there is none, and never writes one) |
 | Shared, outside the project | `~/.xewe-os/build-tools/`: deleting it only means the next setup downloads it again |
@@ -137,29 +137,29 @@ No submodules. The full `build/` tree is in [doc/architecture.md](doc/architectu
 ## Versions and settings
 
 `xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries:
-core `3.1.0`, modules `3.0.0` (moves to `3.1.0` once the modules set is tagged), tools `3.1.2`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
+core `3.1.2`, modules `3.1.0`, tools `3.1.5`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
 follows the default branch; `xewe manifest update` moves the refs to the newest tags. The ref
 policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
 
-The firmware version is `[project] version` in `xewe.toml`; builds never change it. Your settings
-and defaults go in `Config.h`, which holds the core block and one block per selected module (the
+The firmware version is `[project] version` in `xewe.toml`; builds never change it. `Config.h` is
+a catalogue of the core and of every selected module: one block per module, framed by bars with a
+`start` and an `end` line, each with two sections (default runtime values, compile time defined
+constants). Every generated line is a comment; uncomment a `#define` line and change the value to
+override the default (the
 [configuration spec](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md) describes
 the scheme). `xewe build` puts three headers in front of every source file: the generated
 `XeWeBuildInfo.h` (version, timestamp, chip), then `Config.h`, then the generated `XeWeOverrides.h`
-(dotenv values and `--define`s). A first-boot value is commented out in `Config.h`; uncomment it to
-pre-answer the question, or set it to `INJECTED_FROM_DOTENV` to take it from the dotenv file. A
-plain Arduino IDE build uses the defaults. Override one value per build with `--define KEY=VALUE`;
-string values carry their own quotes:
+(dotenv values and `--define`s). Uncommenting a first-boot line pre-answers its question, or set it
+to `INJECTED_FROM_DOTENV` to take it from the dotenv file. A plain Arduino IDE build uses the
+defaults. Override one value per build with `--define KEY=VALUE`; string values carry their own
+quotes:
 `build/tools/.venv/bin/python -m xewe build --define 'XEWE_CORE_DEVICE_NAME="Bench"'`. The project
 URL is the `.url` on the `XeWeOs os({...})` line of `xewe-os.ino`.
 
-The modules' compile-time values (a LED data pin, a buffer size, listener slots) live in `Config.h`
-too: `./setup.sh` and `xewe modules select` append one marked block per selected module
-(`// ---- wifi (xewe modules generate) ----` … `// ---- end wifi ----`) the first time the module is
-selected, and never touch it again. Edit the numbers, keep the markers. `xewe build` passes
-`Config.h` to every translation unit, so the module sources see your values; a `--define` of the
-same name still wins. First-boot defaults that a module stores in NVS (a strip length, a
-sensor address) are not in `Config.h`; each module README lists its `--define` names.
+`./setup.sh` and `xewe modules select` append the block of every selected module (`/* ---- start
+wifi ---- */` ... `/* ---- end wifi ---- */`) the first time the module is selected, and never touch
+it again. `xewe build` passes `Config.h` to every translation unit, so the module sources see your
+values; a `--define` of the same name still wins.
 
 ## Releases
 

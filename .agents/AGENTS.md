@@ -132,7 +132,9 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
   your_module_full(os);`).
 - `Config.h` includes nothing: `xewe build` puts the generated `XeWeBuildInfo.h`, then `Config.h`,
   then the generated `XeWeOverrides.h` in front of every source file (`-include`). It holds the core
-  block and one block per selected module; spec: xewe-os-core `doc/config.md`.
+  block and one block per selected module, framed by bars with start and end lines, two sections
+  each; a catalogue where every generated line is a comment (uncomment a `#define` to override);
+  spec: xewe-os-core `doc/config.md`.
 - The version is `[project] version` in `xewe.toml`, never a literal in code.
 - `src/YourModule/` and `src/YourModuleFull/` are teaching code: their comments explain the
   `xewe::Module` API to a reader, and they must keep compiling against the current core. When the

@@ -80,7 +80,7 @@ project on the machine:
 my-fw/
 ├── xewe-os.ino              committed   #include "Config.h", <XeWeCore.h>; XeWeOs os({...}); your setup()/loop()
 ├── Config.h                 committed   the core block (the core's values) plus one appended block per
-│                                        selected module (setup adds it once; you edit it)
+│                                        selected module (setup adds it once; every line a comment)
 ├── xewe.toml                committed   the manifest: [project] [core] [modules] [tools] [libraries]
 ├── setup.sh                 committed   bootstraps build/tools/.venv, then calls `python -m xewe setup`
 ├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules, each with its Config.h
@@ -232,8 +232,8 @@ elsewhere. The tools never read or write `~/.arduino15` or `~/Arduino`.
 Tags carry no `v` from 3.0.0 on (older `v` tags keep their names).
 
 **Refs: pinned to tags, 3.1.0 generation.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or
-`latest`, the newest commit of the repository's default branch. The template pins core `3.1.0`,
-tools `3.1.2`, modules `3.0.0` until the modules set is tagged 3.1.0, and ArduinoJson `v7.4.3`; the
+`latest`, the newest commit of the repository's default branch. The template pins core `3.1.2`,
+tools `3.1.5`, modules `3.1.0` and ArduinoJson `v7.4.3`; the
 whole ecosystem releases 3.1.0 in dependency order (tools, core, modules, `xewe-os`, then the
 product). A project moves its refs with `xewe manifest update` (newest tag), and a new core or
 modules release reaches a project only when its manifest moves. `.github/workflows/ci.yml` calls

@@ -35,7 +35,7 @@
 #     -m board` (board, JUnit, the BOARD_GATES set: one session per chip); for any other chip `xewe
 #     test --chip C --no-board -- -m board` (board: compiled, not run). The defines of a chip's
 #     build, flash and board steps come from XEWE_RELEASE_DEFINES_<CHIP> (environment, space
-#     separated KEY=VALUE, e.g. XEWE_RELEASE_DEFINES_S3="XEWE_MODULE_LED_PIN_DATA=48"); then
+#     separated KEY=VALUE, e.g. XEWE_RELEASE_DEFINES_S3="XEWE_LED_PIN_DATA=48"); then
 #     `xewe format --check` and `xewe brand-lint .` (check);
 #   8 card: `xewe release-card render` writes releases/<version>/release_card.md, or refuses (the
 #     draft is in the logs folder); prints the commit command.
