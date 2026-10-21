@@ -140,9 +140,10 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
   `xewe::Module` API to a reader, and they must keep compiling against the current core. When the
   core's module API changes, update them and the README's console walk-through together.
 - A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
-  core's `doc/config.md` (three section markers, `#ifndef` groups, `_PROMPT` only on a first-boot
-  value), named `XEWE_<ID>_*` with the module id in upper case (`XEWE_YOUR_MODULE_*`,
-  `XEWE_YOUR_MOD_FULL_*`). The user edits it in place; `xewe modules generate` never touches it.
+  core's `doc/config.md` (two sections, `#ifndef` groups, `/* */`
+  comments, `_PROMPT` only on a value asked at first boot), named `XEWE_<ID>_*` with the module id
+  in upper case (`XEWE_YOUR_MODULE_*`, `XEWE_YOUR_MOD_FULL_*`). The user edits it in place; `xewe
+  modules generate` never touches it.
   The heartbeat of `YourModule` is off by default (`XEWE_YOUR_MODULE_HEARTBEAT 0`).
 - Module code rules (constructor parameter `host`, `[this]` captures, never `cli(`, ids ≤ 15
   characters) are in the modules repository's `doc/contract.md` and `.agents/RULES.md`; they apply to

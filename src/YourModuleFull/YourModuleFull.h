@@ -16,9 +16,9 @@
 
 #include <XeWeCore.h>
 
-// The module's values: Config.h in this folder. Runtime defaults are the table defaults, the
-// first-boot level is asked for (or pre-answered by the build), and the compile-time constants
-// (tick period, tick printing, prompt timeout) never change at run time and are not stored.
+// The module's values: Config.h in this folder. Default runtime values are the table defaults
+// (the level is asked at first boot, or pre-answered by the build); the compile time defined
+// constants (tick period, tick printing, prompt timeout) never change at run time, not stored.
 #include "Config.h"
 
 // Plain settings are table rows (YourModuleFull.cpp, settings()). What is not one value per key

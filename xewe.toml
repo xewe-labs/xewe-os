@@ -14,7 +14,7 @@ ref = "3.1.2"
 
 [modules]
 repo = "https://github.com/xewe-labs/xewe-os-modules"
-ref = "3.1.0"
+ref = "wifi/3.1.2"
 selected = []
 
 [tools]

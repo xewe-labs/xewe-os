@@ -233,7 +233,7 @@ Tags carry no `v` from 3.0.0 on (older `v` tags keep their names).
 
 **Refs: pinned to tags, 3.1.0 generation.** A ref in `xewe.toml` is a tag, a branch, a commit SHA or
 `latest`, the newest commit of the repository's default branch. The template pins core `3.1.2`,
-tools `3.1.5`, modules `3.1.0` and ArduinoJson `v7.4.3`; the
+tools `3.1.5`, modules `wifi/3.1.2` and ArduinoJson `v7.4.3`; the
 whole ecosystem releases 3.1.0 in dependency order (tools, core, modules, `xewe-os`, then the
 product). A project moves its refs with `xewe manifest update` (newest tag), and a new core or
 modules release reaches a project only when its manifest moves. `.github/workflows/ci.yml` calls

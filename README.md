@@ -137,9 +137,9 @@ No submodules. The full `build/` tree is in [doc/architecture.md](doc/architectu
 ## Versions and settings
 
 `xewe.toml` pins one ref each for XeWeCore, the modules and the tools, plus third-party libraries:
-core `3.1.2`, modules `3.1.0`, tools `3.1.5`, ArduinoJson `v7.4.3`. A tag freezes a ref; `latest`
-follows the default branch; `xewe manifest update` moves the refs to the newest tags. The ref
-policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
+core `3.1.2`, modules `wifi/3.1.2`, tools `3.1.5`, ArduinoJson `v7.4.3`. A tag freezes a ref;
+`latest` follows the default branch; `xewe manifest update` moves the refs to the newest tags.
+The ref policy is in [doc/architecture.md](doc/architecture.md#6-versioning-and-release-policy-d12).
 
 The firmware version is `[project] version` in `xewe.toml`; builds never change it. `Config.h` is
 a catalogue of the core and of every selected module: one block per module, framed by bars with a
@@ -201,7 +201,7 @@ never touches them.
 
 A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
 [configuration spec](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md): pure
-preprocessor, the three section markers (runtime defaults, first-boot values, compile-time
+preprocessor, the two section markers (default runtime values, compile time defined
 constants), one `#ifndef` group per value. Its names start with `XEWE_<ID>_`, the module id in
 upper case: `XEWE_YOUR_MODULE_` for `your_module`, `XEWE_YOUR_MOD_FULL_` for `your_mod_full`. You
 edit that file in place; `xewe modules generate` never touches a project-local module, so its
@@ -215,15 +215,15 @@ values get no block in the project's `Config.h`. A `--define` or a line in the p
   `beat_s` seconds. Copy this one for a simple module.
 - **`src/YourModuleFull/`** (`$your_mod_full`; ids are NVS namespaces, at most 15 characters): the
   full tour. It overrides every `xewe::Module` hook (all four `begin_routines_*`, `loop`, `enable`,
-  `disable`, `reset`, `status`) and shows a `Config.h` with all three sections, a bounded
-  first-boot prompt for the first-boot value `XEWE_YOUR_MOD_FULL_LEVEL` (asked only under
-  `XEWE_YOUR_MOD_FULL_LEVEL_PROMPT`; `--define 'XEWE_YOUR_MOD_FULL_LEVEL=70'` pre-answers it), a
-  settings table with a `SECRET` row (`token`, never printed) and a `RESTART` row (`pin`),
-  `on_setting_changed`, a FlexData blob with a `schema` field checked with `has()` (a foreign blob
-  is never overwritten) and reported through `schema_extra`, a GPIO claimed in the core pin
-  registry, an `AsyncTimer` in `loop`, `validate<>`, one command name with two argument counts,
-  `os.report_error` and a `xewe::ListenerSet` the sketch subscribes to. Copy what you need and delete
-  the rest.
+  `disable`, `reset`, `status`) and shows a `Config.h` with both sections, a bounded
+  first-boot prompt for the value asked at first boot `XEWE_YOUR_MOD_FULL_LEVEL` (asked only
+  under `XEWE_YOUR_MOD_FULL_LEVEL_PROMPT`; `--define 'XEWE_YOUR_MOD_FULL_LEVEL=70'` pre-answers
+  it), a settings table with a `SECRET` row (`token`, never printed) and a `RESTART` row
+  (`pin`), `on_setting_changed`, a FlexData blob with a `schema` field checked with `has()` (a
+  foreign blob is never overwritten) and reported through `schema_extra`, a GPIO claimed in the core
+  pin registry, an `AsyncTimer` in `loop`, `validate<>`, one command name with two argument counts,
+  `os.report_error` and a `xewe::ListenerSet` the sketch subscribes to. Copy what you need and
+  delete the rest.
 
 Both examples are tested by `xewe test` (`tests/board/` and `tests/unit/test_examples.py`).
 
