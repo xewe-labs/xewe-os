@@ -13,7 +13,7 @@ One brand word, every form derived from it.
 | A module's compile-time values in its `Config.h` | `XEWE_<SLUG>_<PARAM>`, slug in upper case with `_` for `-` | `XEWE_WIFI_DEBUG` |
 | The values of a project-local module (xewe-os and the projects made from it), in `src/<Folder>/Config.h` | `XEWE_<ID>_<PARAM>`, the module id in upper case; `<PARAM>` of a runtime default or first-boot value is its settings key in upper case | `XEWE_YOUR_MODULE_BEAT_S`, `XEWE_YOUR_MOD_FULL_LEVEL` |
 | Module slug (folder in the modules repo, `--modules` names) | lowercase kebab, `^[a-z0-9][a-z0-9-]*$` | `wifi`, `web-interface` |
-| Module id (CLI group and NVS namespace) | lowercase snake, `^[a-z][a-z0-9_]*$`, at most 15 characters, never branded | `$wifi`, `$your_mod_full` |
+| Module id (CLI group and NVS namespace) | lowercase snake, `^[a-z][a-z0-9_]*$`, at most 15 characters, never branded | `$wifi`, `$full_module` |
 | Module folder and class | PascalCase, `^[A-Z][A-Za-z0-9]*$` | `Wifi`, `WebInterface` |
 | Arduino library name | `XeWeCore` (registered; never changes) | |
 

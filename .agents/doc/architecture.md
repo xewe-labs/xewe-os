@@ -1,6 +1,6 @@
 # Architecture
 
-Why XeWe OS is shaped the way it is. The [README](../README.md) says how to use it; this page says
+Why XeWe OS is shaped the way it is. The [README](../../README.md) says how to use it; this page says
 why it is four repositories, why the sketch reaches the library through one include, why modules
 carry an explicit declare line, what is decided versus still open, and where XeWe OS stands
 against the rest of the ESP32 ecosystem (section 8).
@@ -83,10 +83,13 @@ my-fw/
 │                                        selected module (setup adds it once; every line a comment)
 ├── xewe.toml                committed   the manifest: [project] [core] [modules] [tools] [libraries]
 ├── setup.sh                 committed   bootstraps build/tools/.venv, then calls `python -m xewe setup`
-├── src/YourModule/  src/YourModuleFull/   committed   project-local example modules, each with its Config.h
+├── src/SimpleModule/  src/FullModule/     committed   project-local sample modules, each with its Config.h
 ├── tests/board/  tests/unit/  committed  the project's tests (`xewe test`)
-├── static/firmware/releases/  .gitkeep only  build output of `xewe release`; ignored, binaries are release assets (D26)
-├── README.md  LICENSE.txt  doc/  .agents/  .github/workflows/ci.yml   committed
+├── static/                    ignored        build output of `xewe release`; nothing in git, binaries are release assets (D26)
+├── README.md  LICENSE.txt  .github/workflows/ci.yml   committed
+├── doc/                     committed   xewe_os_ecosystem.md  writing_a_module.md  testing.md
+├── .agents/                 committed   AGENTS.md  RULES.md  PREFERENCES.md  skills/  handoffs/
+│   └── doc/                             architecture.md  naming.md
 ├── run.sh                   generated   written by every ./setup.sh; calls `xewe run`
 ├── .env                     local       credentials for `xewe provision`; optional, yours (setup never writes it)
 ├── src/Modules.h            generated   #include <XeWeModules.h> + the declare lines
@@ -253,7 +256,7 @@ and ESP Web Tools `manifest.json`, `firmware_map.csv`, `firmware-X.Y.Z.tar.gz` a
 holds the binaries (D26). Each image has a direct URL,
 `https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>`. The old `binaries` branch
 and the committed 3.0.0 folder are legacy; the CI lint `No committed firmware` keeps
-`static/firmware/releases/` empty apart from `.gitkeep`.
+`static/` holds nothing in git.
 
 ## 7. Decisions log
 
@@ -288,7 +291,7 @@ unused.
 | D25 | **One repo layout** | `README.md` and `LICENSE.txt` are the only reader files at a root; pages live in `doc/`; the C++ style ships with the tools; `run.sh` is written by `setup.sh` and never committed |
 | D26 | **Binaries are GitHub Release assets only, never committed** | A release publishes each image as an asset with a direct URL (`https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>`); nothing is committed back to `main`, so the tag is the source and the Release is the binary. Git LFS is for `static/media/**` only. `static/firmware/releases/` holds `.gitkeep`; the CI lint `No committed firmware` fails on anything else. Branch publishing (`publish_branch`, `releases_branch`) is deprecated and off |
 | D27 | **Every release has a generated `release_card.md`** | `scripts/release.sh` produces it from one complete run (setup, validation, unit, board per chip, builds, lint) with `xewe release-card`; no hand-written cards. The card records what ran on which commit and tree, every test per chip, and what was not covered (chips without a hardware run are stated as compile only). It is a release asset. The run logs stay in `releases/X.Y.Z/logs/`, local and gitignored; the card lists their names, sizes and sha256 but links none. CI verifies the card against the tagged tree and fails on a mismatch |
-| D28 | **Project-local modules in a product's `src/` are first class** | A module in `src/<Name>/` has the same `xewe::Module` API, contract, tests and NVS namespace rules as one from `xewe-os-modules`; it is declared in the sketch and needs no entry in the modules repo. Its values are in its own `src/<Folder>/Config.h` in the module form of the core's `doc/config.md`, prefixed `XEWE_<ID>_` (the module id in upper case), edited in place. `src/YourModule/` (smallest) and `src/YourModuleFull/` (every hook) are the patterns. A module that other firmwares need moves to the modules repo (D4) |
+| D28 | **Project-local modules in a product's `src/` are first class** | A module in `src/<Name>/` has the same `xewe::Module` API, contract, tests and NVS namespace rules as one from `xewe-os-modules`; it is declared in the sketch and needs no entry in the modules repo. Its values are in its own `src/<Folder>/Config.h` in the module form of the core's `doc/config.md`, prefixed `XEWE_<ID>_` (the module id in upper case), edited in place. `src/SimpleModule/` (smallest) and `src/FullModule/` (every hook) are the patterns. A module that other firmwares need moves to the modules repo (D4) |
 
 Open and deferred:
 

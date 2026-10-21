@@ -18,7 +18,12 @@ in that order. Read it as described below before doing anything else in the repo
    before you rely on anything in it.
 4. **`skills/` — tools.** One folder per skill, each with a `SKILL.md`. Discover them by
    reading the frontmatter of every `skills/*/SKILL.md` (R-10); a folder without a valid one
-   is not a skill (R-11).
+   is not a skill (R-11). This project's skills are `wax_handoff`, `wax_init`,
+   `xewe_os_ecosystem`, `writing_a_module` and `testing`.
+5. **Project docs.** Read the one your task needs, with its skill. In the project's `doc/`:
+   `xewe_os_ecosystem.md` (repositories, pins, `Config.h`, commands), `writing_a_module.md`
+   (modules and the naming rules) and `testing.md` (unit tests, board tests, CI). Why the
+   ecosystem is shaped this way: `.agents/doc/architecture.md` and `.agents/doc/naming.md`.
 
 ## Session shape
 
@@ -47,10 +52,12 @@ in that order. Read it as described below before doing anything else in the repo
 
 ## Project: xewe-os
 
-The firmware template of XeWe OS: a sketch, `Config.h`, `xewe.toml`, two project-local example
-modules and one bootstrap script. Everything else (tools, XeWeCore, modules, libraries) is fetched
-into `build/` by `./setup.sh`. Human documentation: `README.md` (use), `doc/architecture.md` (why, the
-decisions log), `doc/naming.md`. Project rules are X-01 … X-10 at the end of `RULES.md`. Organization
+The firmware template of XeWe OS: a sketch, `Config.h`, `xewe.toml`, two project-local sample
+modules (`SimpleModule`, `FullModule`) and one bootstrap script. Everything else (tools, XeWeCore,
+modules, libraries) is fetched into `build/` by `./setup.sh`. Human documentation: `README.md`
+(index), `doc/xewe_os_ecosystem.md`, `doc/writing_a_module.md`, `doc/testing.md`,
+`.agents/doc/architecture.md` (why, the decisions log) and `.agents/doc/naming.md`. Project rules
+are X-01 … X-10 at the end of `RULES.md`. Organization
 rules: `https://github.com/xewe-labs/.github` (`AGENTS.md` and `guidelines/`); they apply where this
 folder is silent.
 
@@ -79,8 +86,7 @@ chip the build and the board tests: flashed and run on a `--hardware` chip, comp
 others; format, brand-lint; logs in `releases/X.Y.Z/logs/`, gitignored) and renders the generated
 `releases/X.Y.Z/release_card.md` (no hand-written test card). The tag run verifies the card, waits
 for CI and pushes the tag; the tag's CI builds every image, checks the card and publishes the GitHub
-Release with the images and the card as assets. Nothing is committed back: `static/firmware/releases/`
-holds only `.gitkeep` (images are release assets only); never write there by hand.
+Release with the images and the card as assets. Nothing is committed back: images are release assets only.
 
 `-v` may go after the subcommand (`xewe test -v`). `--define` string values carry their own quotes:
 `--define 'XEWE_CORE_DEVICE_NAME="Bench"'`. The project URL is `.url` on the sketch's `XeWeOs os({...})` line.
@@ -128,23 +134,22 @@ arduino-cli directly and never touch `~/.arduino15` or `~/Arduino`.
 
 - The sketch includes `"Config.h"` first, then `<XeWeCore.h>` (the umbrella, its one library
   include); `XeWeOs os({...})` is declared before any module; `src/Modules.h` is included after it,
-  then the project-local modules (`YourModule your_module(os);`, `YourModuleFull
-  your_module_full(os);`).
+  then the project-local modules (`SimpleModule simple_module(os);`, `FullModule
+  full_module(os);`).
 - `Config.h` includes nothing: `xewe build` puts the generated `XeWeBuildInfo.h`, then `Config.h`,
   then the generated `XeWeOverrides.h` in front of every source file (`-include`). It holds the core
   block and one block per selected module, framed by bars with start and end lines, two sections
   each; a catalogue where every generated line is a comment (uncomment a `#define` to override);
   spec: xewe-os-core `doc/config.md`.
 - The version is `[project] version` in `xewe.toml`, never a literal in code.
-- `src/YourModule/` and `src/YourModuleFull/` are teaching code: their comments explain the
+- `src/SimpleModule/` and `src/FullModule/` are teaching code: their comments explain the
   `xewe::Module` API to a reader, and they must keep compiling against the current core. When the
-  core's module API changes, update them and the README's console walk-through together.
+  core's module API changes, update them and their READMEs together.
 - A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
   core's `doc/config.md` (two sections, `#ifndef` groups, `/* */`
   comments, `_PROMPT` only on a value asked at first boot), named `XEWE_<ID>_*` with the module id
-  in upper case (`XEWE_YOUR_MODULE_*`, `XEWE_YOUR_MOD_FULL_*`). The user edits it in place; `xewe
+  in upper case (`XEWE_SIMPLE_MODULE_*`, `XEWE_FULL_MODULE_*`). The user edits it in place; `xewe
   modules generate` never touches it.
-  The heartbeat of `YourModule` is off by default (`XEWE_YOUR_MODULE_HEARTBEAT 0`).
 - Module code rules (constructor parameter `host`, `[this]` captures, never `cli(`, ids ≤ 15
   characters) are in the modules repository's `doc/contract.md` and `.agents/RULES.md`; they apply to
   project-local modules too.
