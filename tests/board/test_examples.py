@@ -1,29 +1,31 @@
-"""Board tests of the two project-local example modules: `$your_module` (src/YourModule/) and
-`$your_mod_full` (src/YourModuleFull/). Run by `xewe test` with every project test.
+"""Board tests of the two project-local sample modules: `$simple_module` (src/SimpleModule/) and
+`$full_module` (src/FullModule/). Run by `xewe test` with every project test.
 
 Hardware preconditions: a provisioned board (first boot done, `xewe provision`). Nothing wired.
+`$simple_module` greets `hello <name>` every period_s seconds while enabled.
 `xewe provision` answers "enable?" with n for a module outside XEWE_PROVISION_MODULES, so either
-example may be enabled or disabled: every test works in both states and leaves it as it found it.
+sample may be enabled or disabled: every test works in both states and leaves it as it found it.
 The settings table commands (`set`/`get`/`schema`) work while a module is disabled.
-The pin-claim test needs the pins module and XEWE_TEST_YOUR_MOD_FULL_PIN (a free output GPIO; the
+The pin-claim test needs the pins module and XEWE_TEST_FULL_MODULE_PIN (a free output GPIO; the
 module toggles it every 10 s while enabled); it is skipped otherwise.
 
 Every disable wipes the module's NVS namespace (core Module::reset): the round trip below resets
-`$your_mod_full` settings (level, label, token, pin, presets) to their defaults.
+`$full_module` settings (level, label, token, pin, presets) to their defaults.
 """
 
 import json
 import os
 import re
+from contextlib import contextmanager
 
 import pytest
 
 from xewe.board.serialio import BOOT_READY, BOOT_UNPROVISIONED, wait_for_banner
 
-ID = "your_module"
-NAME = "Your Module"
-FULL_ID = "your_mod_full"
-FULL_NAME = "Your Module Full"
+ID = "simple_module"
+NAME = "Simple Module"
+FULL_ID = "full_module"
+FULL_NAME = "Full Module"
 INPUT = (
     r"^(?:\(y/n\) )?> $"  # the input line of a firmware prompt; answer only after it
 )
@@ -84,85 +86,150 @@ def _pins_present(serial):
     return not m[0].startswith("Unknown")
 
 
-# ---- $your_module ----
+# ---- $simple_module ----
+
+
+def _simple_enable(serial, name="world", period="10"):
+    # enable restarts; that boot runs begin_routines_init(): answer both questions
+    serial.command(f"${ID} enable", expect=rf"{NAME} module enabled", timeout=5)
+    _wait(serial, r"Who to greet")
+    _wait(serial, INPUT, 10)
+    serial.send(name)
+    serial.expect(rf"^name={name}$", timeout=10)
+    _wait(serial, r"Seconds between greetings \(1-3600\)\?", 10)
+    _wait(serial, INPUT, 10)
+    serial.send(period)
+    serial.expect(rf"^period_s={period}$", timeout=10)
+    _booted(serial)
+
+
+@contextmanager
+def _simple_enabled(serial):
+    # enabled for the block; disabled again afterwards when it was disabled before
+    was_enabled = _enabled(serial, ID, NAME)
+    if not was_enabled:
+        _simple_enable(serial)
+    try:
+        yield
+    finally:
+        if not was_enabled:
+            _disable(serial, ID, NAME)
 
 
 def test_status(serial):
-    serial.command(
-        f"${ID} status", expect=rf"{NAME} module (enabled|disabled)", timeout=5
-    )
-    serial.expect(
-        r"\bnumber\s*[:=|]\s*\d+", timeout=5
-    )  # one `key: value` line per table row
-    serial.expect(r"\bbeat_s\s*[:=|]\s*\d+", timeout=5)
+    if not _enabled(serial, ID, NAME):
+        # disabled: no greeting, even with the shortest period
+        period = _get(serial, ID, "period_s")
+        try:
+            serial.command(f"${ID} set period_s 1", expect=r"^period_s=1$", timeout=5)
+            assert not [
+                l for l in serial.collect(silence=3.0, limit=3.0) if "hello" in l
+            ]
+        finally:
+            serial.command(
+                f"${ID} set period_s {period}",
+                expect=rf"^period_s={period}$",
+                timeout=5,
+            )
+    with _simple_enabled(serial):
+        serial.command(f"${ID} status", expect=rf"{NAME} module enabled", timeout=5)
+        serial.expect(
+            r"\bname\s*[:=|]\s*\S*", timeout=5
+        )  # one `key: value` line per table row
+        serial.expect(r"\bperiod_s\s*[:=|]\s*\d+", timeout=5)
 
 
-def test_set_get_number(serial):
-    before = _get(serial, ID, "number")
+def test_set_get_period_and_name(serial):
+    period, name = _get(serial, ID, "period_s"), _get(serial, ID, "name")
     try:
-        serial.command(f"${ID} set number 421", expect=r"^number=421$", timeout=5)
-        assert _get(serial, ID, "number") == "421"
-        serial.command(
-            f"${ID} show", expect=r"number = 421", timeout=5
-        )  # the module's own command
+        serial.command(f"${ID} set period_s 77", expect=r"^period_s=77$", timeout=5)
+        assert _get(serial, ID, "period_s") == "77"
+        serial.command(f"${ID} set name bench", expect=r"^name=bench$", timeout=5)
+        assert _get(serial, ID, "name") == "bench"
     finally:
         serial.command(
-            f"${ID} set number {before}", expect=rf"^number={before}$", timeout=5
+            f"${ID} set period_s {period}", expect=rf"^period_s={period}$", timeout=5
         )
+        serial.command(f"${ID} set name {name}", expect=rf"^name={name}$", timeout=5)
 
 
 def test_set_rejects_out_of_range(serial):
-    before = _get(serial, ID, "number")
+    period = _get(serial, ID, "period_s")
     serial.command(
-        f"${ID} set number 1001",
-        expect=rf"! \${ID} set number: expected u16 in \[0, 1000\]",
+        f"${ID} set period_s 0",
+        expect=rf"! \${ID} set period_s: expected u16 in \[1, 3600\]",
         timeout=5,
     )
     serial.command(
-        f"${ID} set beat_s 0",
-        expect=rf"! \${ID} set beat_s: expected u16 in \[1, 3600\]",
+        f"${ID} set period_s 3601",
+        expect=rf"! \${ID} set period_s: expected u16 in \[1, 3600\]",
+        timeout=5,
+    )
+    serial.command(
+        f"${ID} set name abcdefghijklmnop",
+        expect=rf"! \${ID} set name: expected str of 0-15 chars",
         timeout=5,
     )
     serial.command(
         f"${ID} set nope 1", expect=rf"! \${ID}: no setting 'nope'", timeout=5
     )
-    assert _get(serial, ID, "number") == before
+    assert _get(serial, ID, "period_s") == period
 
 
 def test_schema_lists_table(serial):
     rows = {r["key"]: r for r in _schema(serial, ID)}
-    assert list(rows) == ["number", "beat_s"]
+    assert list(rows) == ["name", "period_s"]
+    assert (rows["name"]["min"], rows["name"]["max"], rows["name"]["default"]) == (
+        0,
+        15,
+        "world",
+    )
     assert (
-        rows["number"]["min"],
-        rows["number"]["max"],
-        rows["number"]["default"],
-    ) == (0, 1000, 0)
-    assert (
-        rows["beat_s"]["min"],
-        rows["beat_s"]["max"],
-        rows["beat_s"]["default"],
+        rows["period_s"]["min"],
+        rows["period_s"]["max"],
+        rows["period_s"]["default"],
     ) == (1, 3600, 10)
 
 
+def test_greeting(serial):
+    # period_s 1: the next greeting is at most a second away and carries the new name
+    with _simple_enabled(serial):
+        period, name = _get(serial, ID, "period_s"), _get(serial, ID, "name")
+        try:
+            serial.command(f"${ID} set name bench", expect=r"^name=bench$", timeout=5)
+            serial.command(f"${ID} set period_s 1", expect=r"^period_s=1$", timeout=5)
+            serial.expect(r"^hello bench$", timeout=5)
+            serial.expect(r"^hello bench$", timeout=5)  # and again, a second later
+        finally:
+            serial.command(
+                f"${ID} set period_s {period}",
+                expect=rf"^period_s={period}$",
+                timeout=5,
+            )
+            serial.command(
+                f"${ID} set name {name}", expect=rf"^name={name}$", timeout=5
+            )
+
+
 def test_settings_survive_restart(serial):
-    # one restart for both modules: a your_module row and a your_mod_full row
-    number, level = _get(serial, ID, "number"), _get(serial, FULL_ID, "level")
+    # one restart for both modules: a simple_module row and a full_module row
+    period, level = _get(serial, ID, "period_s"), _get(serial, FULL_ID, "level")
     try:
-        serial.command(f"${ID} set number 777", expect=r"^number=777$", timeout=5)
+        serial.command(f"${ID} set period_s 777", expect=r"^period_s=777$", timeout=5)
         serial.command(f"${FULL_ID} set level 63", expect=r"^level=63$", timeout=5)
         _restart(serial)
-        serial.command(f"${ID} show", expect=r"number = 777", timeout=5)
+        assert _get(serial, ID, "period_s") == "777"
         assert _get(serial, FULL_ID, "level") == "63"
     finally:
         serial.command(
-            f"${ID} set number {number}", expect=rf"^number={number}$", timeout=5
+            f"${ID} set period_s {period}", expect=rf"^period_s={period}$", timeout=5
         )
         serial.command(
             f"${FULL_ID} set level {level}", expect=rf"^level={level}$", timeout=5
         )
 
 
-# ---- $your_mod_full ----
+# ---- $full_module ----
 
 
 def test_full_status(serial):
@@ -274,11 +341,11 @@ def _enable(serial):
     _booted(serial)
 
 
-def _disable(serial):
-    serial.command(f"${FULL_ID} disable", expect=r"OK\?", timeout=5)
+def _disable(serial, mod=FULL_ID, name=FULL_NAME):
+    serial.command(f"${mod} disable", expect=r"OK\?", timeout=5)
     serial.expect(INPUT, timeout=5)
     serial.send("y")
-    serial.expect(rf"{FULL_NAME} module disabled", timeout=10)
+    serial.expect(rf"{name} module disabled", timeout=10)
     _wait(serial, r"Rebooting", 10)
     _booted(serial)
 
@@ -312,9 +379,9 @@ def test_full_enable_disable_round_trip(serial):
 def test_full_pin_claim_listed(serial):
     if not _pins_present(serial):
         pytest.skip("needs the pins module ($pins claims)")
-    pin = os.environ.get("XEWE_TEST_YOUR_MOD_FULL_PIN")
+    pin = os.environ.get("XEWE_TEST_FULL_MODULE_PIN")
     if not pin:
-        pytest.skip("needs XEWE_TEST_YOUR_MOD_FULL_PIN (a free output GPIO)")
+        pytest.skip("needs XEWE_TEST_FULL_MODULE_PIN (a free output GPIO)")
     was_enabled = _enabled(serial, FULL_ID, FULL_NAME)
     if not was_enabled:
         _enable(serial)

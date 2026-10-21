@@ -10,10 +10,9 @@ src/Modules.h
 .env
 .env.*
 
-# Release images are GitHub Release assets and are never committed (doc/architecture.md D26);
-# only the .gitkeep placeholder stays. releases/<version>/logs/ are local run logs (D27).
-/static/firmware/releases/*
-!/static/firmware/releases/.gitkeep
+# Release images: GitHub Release assets, written under static/ at release time, never committed.
+/static/
+# releases/<version>/logs/ are local run logs (D27).
 releases/*/logs/
 
 # Editors and OS

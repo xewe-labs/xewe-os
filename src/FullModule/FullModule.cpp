@@ -1,145 +1,112 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// xewe-os/src/YourModuleFull/YourModuleFull.cpp
-//
-// The full tour of xewe::Module (see YourModuleFull.h). Every hook says when the core calls it
-// and what the core does around it. Delete what you do not need; every hook is optional.
-#include "YourModuleFull.h"
+// xewe-os/src/FullModule/FullModule.cpp
+#include "FullModule.h"
 
-YourModuleFull::YourModuleFull(xewe::Os& host)
-    : Module(host, // registers with the Os now; the sketch's declaration order is the begin order
-          /* id                  */ "your_mod_full", // CLI group ($your_mod_full) and NVS
-                                                     // namespace: <= 15 chars, so not
-                                                     // "your_module_full" (16: refused at
-                                                     // registration)
-          /* name                */ "Your Module Full",
-          /* description         */ "Every Module hook, commented", // shown by the first-boot
-                                                                    // "enable?" question
-          /* requires_init_setup */ true, // run begin_routines_init() until it completes once
-          /* can_be_disabled     */ true, // first boot asks "enable?"; adds $your_mod_full enable /
-                                          // disable
-          /* has_cli_commands    */ true) // creates the group, adds status / reset;
-                                          // register_command() works
-      ,
-      tick_timer(XEWE_YOUR_MOD_FULL_TICK_MS) {
-    // Runs during static construction: Serial is not up and NVS is not read yet, so only
-    // store things and register commands here. Anything that talks or reads goes in begin_*.
+FullModule::FullModule(xewe::Os& host)
+    : Module(host,
+          /* id                  */ "full_module",
+          /* name                */ "Full Module",
+          /* description         */ "Every Module hook, commented",
+          /* requires_init_setup */ true,
+          /* can_be_disabled     */ true,
+          /* has_cli_commands    */ true),
+      tick_timer(XEWE_FULL_MODULE_TICK_MS) {
+    // static construction: store and register only, no serial and no NVS
     register_commands();
 }
 
-// The settings table: one row per plain setting, checked at compile time (key <= 15
-// chars, default inside [min, max]). The defaults come from Config.h (the level is its first-boot
-// value). The core loads the table at begin (default, then NVS), adds
-// `$your_mod_full set|get|schema`, one status line per row and the rows of `$system schema`.
-xewe::Settings YourModuleFull::settings() const {
+// One row per plain setting; defaults from Config.h.
+xewe::Settings FullModule::settings() const {
     static constexpr xewe::SettingDef table[] = {
-        xewe::setting<&YourModuleFull::level>(
-            "level", 0, 100, XEWE_YOUR_MOD_FULL_LEVEL, "Level, %"),
-        xewe::setting<&YourModuleFull::active>("active", XEWE_YOUR_MOD_FULL_ACTIVE, "Count ticks"),
-        xewe::setting<&YourModuleFull::label>(
-            "label", 15, XEWE_YOUR_MOD_FULL_LABEL, "Shown at boot"),
-        xewe::setting<&YourModuleFull::token>(
-            "token", 31, "", "API token", xewe::SettingDef::SECRET),
-        xewe::setting<&YourModuleFull::pin>(
-            "pin", 0, 255, XEWE_YOUR_MOD_FULL_PIN, "GPIO, 255 = none", xewe::SettingDef::RESTART),
+        xewe::setting<&FullModule::level>("level", 0, 100, XEWE_FULL_MODULE_LEVEL, "Level, %"),
+        xewe::setting<&FullModule::active>("active", XEWE_FULL_MODULE_ACTIVE, "Count ticks"),
+        xewe::setting<&FullModule::label>("label", 15, XEWE_FULL_MODULE_LABEL, "Shown at boot"),
+        xewe::setting<&FullModule::token>("token", 31, "", "API token", xewe::SettingDef::SECRET),
+        xewe::setting<&FullModule::pin>(
+            "pin", 0, 255, XEWE_FULL_MODULE_PIN, "GPIO, 255 = none", xewe::SettingDef::RESTART),
     };
     return {table, this};
 }
 
-// Values that are not table rows still appear in the schema, with a "set" hint (like the
-// scheduler's blocks).
-void YourModuleFull::schema_extra(xewe::SchemaOut& out) const {
+// The presets as schema rows, each with its `set` hint.
+void FullModule::schema_extra(xewe::SchemaOut& out) const {
     for (size_t i = 0; i < presets.levels.size(); ++i) {
         out.row("\"key\":\"level\",\"group\":\"preset:" + std::to_string(i) +
             "\",\"type\":\"u16\",\"min\":0,"
             "\"max\":100,\"value\":" +
-            std::to_string(presets.levels[i]) + ",\"set\":\"$your_mod_full preset " +
+            std::to_string(presets.levels[i]) + ",\"set\":\"$full_module preset " +
             std::to_string(i) + " <0-100>\"");
     }
 }
 
 // ---- begin ----
 
-// Every boot while enabled, first (the table is loaded already). Pins, buses, the blob.
-void YourModuleFull::begin_routines_required() {
+// Loads the presets blob and claims the tick LED pin.
+void FullModule::begin_routines_required() {
     load_presets();
-    // claim the GPIO in the core registry before touching it: refused (and reported) when another
-    // module holds it. A strapping pin is claimed with a warning.
     pin_claimed = pin != 255 && xewe::pins::claim(pin, id.c_str());
     if (pin_claimed)
         pinMode(pin, OUTPUT);
 }
 
-// First boot (and after `$your_mod_full reset` or disable/enable, which wipe init_complete).
-// After it returns, the core writes init_complete = true unless this routine disabled the module.
-// Prompts are allowed here (setup time) but must be bounded: a headless device must still boot.
-// XEWE_YOUR_MOD_FULL_LEVEL_PROMPT exists only while nothing in the build set the level
-// (Config.h of this folder): then the user is asked, else the build's level is the answer.
-void YourModuleFull::begin_routines_init() {
-#ifdef XEWE_YOUR_MOD_FULL_LEVEL_PROMPT
+// Asks the starting level (bounded), or stores the build's level without a question.
+void FullModule::begin_routines_init() {
+#ifdef XEWE_FULL_MODULE_LEVEL_PROMPT
     bool answered = false;
-    uint16_t value = os.serial.get_uint16("Starting level (0-100)?", 0, 100,
-        2, // two attempts
-        XEWE_YOUR_MOD_FULL_PROMPT_TIMEOUT_MS, // per attempt
-        XEWE_YOUR_MOD_FULL_LEVEL, // the suggestion, returned on timeout
-        answered);
+    uint16_t value = os.serial.get_uint16("Starting level (0-100)?", 0, 100, 2,
+        XEWE_FULL_MODULE_PROMPT_TIMEOUT_MS, XEWE_FULL_MODULE_LEVEL, answered);
     if (!answered)
         os.serial.printf("No answer: level stays %u", value);
-    set_level(value); // saves to NVS and tells the listeners
+    set_level(value);
 #else
-    // no question: saves the build's level and tells the listeners
-    set_level(XEWE_YOUR_MOD_FULL_LEVEL);
+    set_level(XEWE_FULL_MODULE_LEVEL);
 #endif
 }
 
-// Every later boot (init already completed). Typical: reconnect, restore state, say hello.
-void YourModuleFull::begin_routines_regular() {
+// Prints the stored values.
+void FullModule::begin_routines_regular() {
     os.serial.printf("%s: level %u, active %s, label '%s'", name.c_str(), level,
         active ? "yes" : "no", label.c_str());
 }
 
-// Every boot while enabled, last: init or regular has run. Start timers and background work.
-void YourModuleFull::begin_routines_common() {
+// Starts the tick timer.
+void FullModule::begin_routines_common() {
     tick_timer.initiate();
 }
 
 // ---- run time ----
 
-// Called on every os.loop() pass while enabled; it shares one loop with every module, so it
-// checks a timer and returns. Never delay(), never prompt.
-void YourModuleFull::loop() {
+// Counts a tick and toggles the LED when the timer is done.
+void FullModule::loop() {
     if (!active || tick_timer.is_not_done())
         return;
-    tick_timer.initiate(); // restart: the next tick is XEWE_YOUR_MOD_FULL_TICK_MS from now
+    tick_timer.initiate();
     ++ticks;
     if (pin_claimed)
         digitalWrite(pin, ticks & 1);
-    if (XEWE_YOUR_MOD_FULL_PRINT_TICKS)
+    if (XEWE_FULL_MODULE_PRINT_TICKS)
         os.serial.printf("%s: tick %lu", name.c_str(), (unsigned long)ticks);
 }
 
-// ---- flow: override to add your own work; always call the base, it owns the NVS flags ----
+// ---- flow: always call the base, it owns the NVS flags ----
 
-// Base: refuses while a required module is disabled, else writes is_enabled and restarts.
-// The next boot runs begin_routines_init() again (disable wiped init_complete).
-void YourModuleFull::enable(const bool verbose, const bool do_restart) {
+// Nothing to add to the base.
+void FullModule::enable(const bool verbose, const bool do_restart) {
     Module::enable(verbose, do_restart);
 }
 
-// Base: with verbose asks "OK?" (bounded, 2 x 15 s), cascades disable to every module that
-// add_requirement()'d this one, then calls reset(verbose, do_restart, false) - our override below.
-// loop() stops being called once disabled; stop hardware the base does not know about.
-void YourModuleFull::disable(const bool verbose, const bool do_restart) {
-    Module::disable(verbose, do_restart); // returns only when cancelled or do_restart is false
+// Stops the tick timer once disabled.
+void FullModule::disable(const bool verbose, const bool do_restart) {
+    Module::disable(verbose, do_restart);
     if (is_disabled())
-        tick_timer.terminate(); // e.g. a cascade from a required module: stop our work
+        tick_timer.terminate();
 }
 
-// Base: erases the WHOLE namespace (table keys and the presets blob), reloads the table defaults,
-// keeps not_first_boot, re-enables when keep_enabled, restarts. `$your_mod_full reset` calls it.
-void YourModuleFull::reset(const bool verbose, const bool do_restart, const bool keep_enabled) {
-    presets = YourModuleFullPresets{}; // RAM matches the wiped NVS until the restart
-    presets_owned = true; // the namespace is empty now: it is ours
+// Drops the presets and the pin claim, then lets the base wipe the namespace.
+void FullModule::reset(const bool verbose, const bool do_restart, const bool keep_enabled) {
+    presets = FullModulePresets{};
+    presets_owned = true;
     if (pin_claimed)
         xewe::pins::release(pin, id.c_str());
     pin_claimed = false;
@@ -148,9 +115,8 @@ void YourModuleFull::reset(const bool verbose, const bool do_restart, const bool
 
 // ---- info ----
 
-// Module::status prints the base line and one `key: value` line per table row (token masked);
-// add only what the table cannot show.
-std::string YourModuleFull::status(const bool verbose) const {
+// Adds the tick count and the presets state to the base status.
+std::string FullModule::status(const bool verbose) const {
     std::string s = Module::status(false) + "\nticks: " + std::to_string(ticks);
     if (!presets_owned)
         s += "\npresets: foreign blob in NVS, not saving";
@@ -161,44 +127,43 @@ std::string YourModuleFull::status(const bool verbose) const {
 
 // ---- public API ----
 
-void YourModuleFull::set_level(uint16_t value, const void* origin) {
+void FullModule::set_level(uint16_t value, const void* origin) {
     if (is_disabled(true))
-        return; // registered but disabled: refuse politely
-    level_origin = origin; // on_setting_changed passes it to the listeners
-    apply_setting("level", std::to_string(value), true); // validated (0-100), saved, announced
+        return;
+    level_origin = origin;
+    apply_setting("level", std::to_string(value), true);
     level_origin = nullptr;
 }
 
-void YourModuleFull::use_preset(uint8_t index) {
+void FullModule::use_preset(uint8_t index) {
     if (index < presets.levels.size())
         set_level(presets.levels[index]);
 }
 
-void YourModuleFull::on_setting_changed(const xewe::SettingDef& def) {
+void FullModule::on_setting_changed(const xewe::SettingDef& def) {
     if (std::string_view(def.key) != "level")
-        return; // pin: RESTART, the core says so
+        return;
     const void* origin = level_origin;
     listeners.notify([&](LevelListener& l) { l.on_level(level, origin); });
 }
 
 // ---- commands ----
 
-void YourModuleFull::register_commands() {
-    // `set`/`get`/`schema` come from the table. Same name, two arg counts: the Cli picks by count.
-    register_command({"preset", "Use a preset level: <0-2>", "$your_mod_full preset 1", 1,
+// `preset <i>` uses a preset, `preset <i> <level>` stores one.
+void FullModule::register_commands() {
+    register_command({"preset", "Use a preset level: <0-2>", "$full_module preset 1", 1,
         [this](xewe::span<const std::string> args) {
-            // validate<T>(text, min, max): parse + range check; an empty optional on bad input
             if (auto i = xewe::validate<uint8_t>(args[0], 0, 2))
                 use_preset(*i);
             else
-                os.serial.print("Usage: $your_mod_full preset <0-2>");
+                os.serial.print("Usage: $full_module preset <0-2>");
         }});
-    register_command({"preset", "Store a preset level: <0-2> <0-100>", "$your_mod_full preset 1 75",
+    register_command({"preset", "Store a preset level: <0-2> <0-100>", "$full_module preset 1 75",
         2, [this](xewe::span<const std::string> args) {
             auto i = xewe::validate<uint8_t>(args[0], 0, 2);
             auto v = xewe::validate<uint16_t>(args[1], 0, 100);
             if (!i || !v) {
-                os.serial.print("Usage: $your_mod_full preset <0-2> <0-100>");
+                os.serial.print("Usage: $full_module preset <0-2> <0-100>");
                 return;
             }
             presets.levels[*i] = *v;
@@ -206,26 +171,22 @@ void YourModuleFull::register_commands() {
         }});
 }
 
-// ---- NVS (the blob; the table rows need none of this) ----
+// ---- NVS ----
 
-// A missing blob (fresh device) or a failed decode means defaults. A blob without a `schema` field,
-// or with another schema, may belong to another firmware that used this id on this board: use
-// defaults in RAM but never overwrite it; `$your_mod_full reset` wipes it and takes over.
-void YourModuleFull::load_presets() {
-    YourModuleFullPresets stored;
+// Defaults when the blob is missing or foreign; a foreign blob is never overwritten.
+void FullModule::load_presets() {
+    FullModulePresets stored;
     const bool read = os.nvs.read_flex(id, "presets", stored);
-    // has(): "schema was in the blob", not "schema still has its default" (FlexData presence)
-    presets_owned =
-        !read || (stored.has("schema") && stored.schema == YourModuleFullPresets{}.schema);
-    presets =
-        (read && presets_owned && stored.levels.size() == 3) ? stored : YourModuleFullPresets{};
+    presets_owned = !read || (stored.has("schema") && stored.schema == FullModulePresets{}.schema);
+    presets = (read && presets_owned && stored.levels.size() == 3) ? stored : FullModulePresets{};
     if (!presets_owned)
         os.report_error(
             "! %s: presets schema %u, expected %u: defaults, not saving (reset to take over)",
             name.c_str(), stored.schema, presets.schema);
 }
 
-void YourModuleFull::save_presets() {
+// Writes the blob unless it belongs to another firmware.
+void FullModule::save_presets() {
     if (!presets_owned) {
         os.serial.print("Changed for this boot only (foreign presets in NVS)");
         return;

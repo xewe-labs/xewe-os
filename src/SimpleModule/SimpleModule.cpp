@@ -1,58 +1,63 @@
 // SPDX-FileCopyrightText: 2026 Maxim Dokukin (maxdokukin.com)
 // SPDX-License-Identifier: GPL-3.0-only
-// xewe-os/src/YourModule/YourModule.cpp
-//
-// Project-local module: rename or delete this folder; it is yours, setup never touches it.
-// `$your_module disable` asks "OK?" (two tries, 15 s each; no clear yes = cancelled). On yes it
-// wipes the module's NVS namespace, marks it disabled and restarts; while disabled loop() does
-// not run and set_number() refuses. `$your_module enable` brings it back.
-#include "YourModule.h"
+// xewe-os/src/SimpleModule/SimpleModule.cpp
+#include "SimpleModule.h"
 
-YourModule::YourModule(xewe::Os& host)
-    : Module(host, // registers this module with the Os, right here
-          /* id                  */ "your_module", // command group ($your_module ...) and NVS
-                                                   // namespace; <= 15 chars
-          /* name                */ "Your Module",
-          /* description         */ "Remembers one number in NVS",
-          /* requires_init_setup */ false, // true would run begin_routines_init() once
-          /* can_be_disabled     */ true, // adds $your_module enable / disable
-          /* has_cli_commands    */ true) { // adds $your_module status / reset, allows our own
-    // `$your_module set number 42` / `get number` / `schema` come from the table below.
-    // $your_module show: our own command, no arguments; the Cli checks the count.
-    register_command({"show", "Print the stored number", "$your_module show", 0,
-        [this](xewe::span<const std::string>) { os.serial.printf("number = %u", number); }});
-}
+namespace {
+constexpr uint16_t kPromptTries = 2; // bounded first-boot prompts: a headless board still boots
+constexpr uint32_t kPromptTimeoutMs = 30000;
+} // namespace
 
-xewe::Settings YourModule::settings() const {
-    // one row per setting: key (= NVS key, <= 15 chars), min, max, default (from Config.h), doc;
-    // checked at build time
+SimpleModule::SimpleModule(xewe::Os& host)
+    : Module(host,
+          /* id                  */ "simple_module",
+          /* name                */ "Simple Module",
+          /* description         */ "Greets a name on the console",
+          /* requires_init_setup */ true,
+          /* can_be_disabled     */ true,
+          /* has_cli_commands    */ true),
+      greet_timer(XEWE_SIMPLE_MODULE_PERIOD_S * 1000UL) {}
+
+xewe::Settings SimpleModule::settings() const {
     static constexpr xewe::SettingDef table[] = {
-        xewe::setting<&YourModule::number>(
-            "number", 0, 1000, XEWE_YOUR_MODULE_NUMBER, "The remembered number"),
-        xewe::setting<&YourModule::beat_s>(
-            "beat_s", 1, 3600, XEWE_YOUR_MODULE_BEAT_S, "Heartbeat period, s"),
+        xewe::setting<&SimpleModule::who>("name", 15, XEWE_SIMPLE_MODULE_NAME, "Who to greet"),
+        xewe::setting<&SimpleModule::period_s>(
+            "period_s", 1, 3600, XEWE_SIMPLE_MODULE_PERIOD_S, "Seconds between greetings"),
     };
     return {table, this};
 }
 
-void YourModule::loop() {
-    // XEWE_YOUR_MODULE_HEARTBEAT is 0 by default: build with it at 1 to see the beat
-    if (!XEWE_YOUR_MODULE_HEARTBEAT || millis() - last_beat_ms < beat_s * 1000UL)
-        return; // non-blocking timer
-    last_beat_ms = millis();
-    os.serial.printf("your_module: number is %u", number);
+void SimpleModule::begin_routines_init() {
+#ifdef XEWE_SIMPLE_MODULE_NAME_PROMPT
+    std::string answer = os.serial.get_string("Who to greet (Enter for \"" XEWE_SIMPLE_MODULE_NAME
+                                              "\", up to 15 characters)?",
+        0, 15, kPromptTries, kPromptTimeoutMs, XEWE_SIMPLE_MODULE_NAME);
+    apply_setting("name", answer.empty() ? XEWE_SIMPLE_MODULE_NAME : answer, true);
+#else
+    apply_setting("name", XEWE_SIMPLE_MODULE_NAME);
+#endif
+#ifdef XEWE_SIMPLE_MODULE_PERIOD_S_PROMPT
+    uint16_t seconds = os.serial.get_uint16("Seconds between greetings (1-3600)?", 1, 3600,
+        kPromptTries, kPromptTimeoutMs, XEWE_SIMPLE_MODULE_PERIOD_S);
+    apply_setting("period_s", std::to_string(seconds), true);
+#else
+    apply_setting("period_s", std::to_string(XEWE_SIMPLE_MODULE_PERIOD_S));
+#endif
 }
 
-std::string YourModule::status(const bool verbose) const {
-    // compose, don't replace: the base prints "enabled" and one `key: value` line per table row
-    std::string s = Module::status(false);
-    if (verbose)
-        os.serial.print(s);
-    return s;
+void SimpleModule::begin_routines_common() {
+    greet_timer.reset(period_s * 1000UL, 0, 0);
+    greet_timer.initiate();
 }
 
-void YourModule::set_number(uint16_t value) {
-    if (is_disabled(true))
-        return; // disabled modules stay callable; refuse politely
-    apply_setting("number", std::to_string(value), true); // validated (0-1000), saved, printed
+void SimpleModule::loop() {
+    if (greet_timer.is_not_done())
+        return;
+    greet_timer.initiate();
+    os.serial.printf("hello %s", who.c_str());
+}
+
+void SimpleModule::on_setting_changed(const xewe::SettingDef& def) {
+    if (std::string_view(def.key) == "period_s")
+        begin_routines_common();
 }
