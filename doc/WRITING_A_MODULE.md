@@ -7,14 +7,9 @@ setup never touches it. This page also holds the naming reference for the whole 
 
 ## Start from a sample
 
-- [src/SimpleModule/](../src/SimpleModule/README.md) is the one to copy. It prints
-  `hello <name>` every `period_s` seconds; its settings are `name` (string, up to 15 characters,
-  default `world`) and `period_s` (1 to 3600, default 10), both asked at first boot. It has no
-  compile time constants.
-- [src/FullModule/](../src/FullModule/README.md) is the one to read. It overrides every hook of
-  `xewe::Module` and shows settings `active`, `label`, `pin` and `level` (the level is asked at
-  first boot), listeners, a timed tick and a prompt timeout. Its compile time constants are
-  `TICK_MS`, `PRINT_TICKS` and `PROMPT_TIMEOUT_MS`.
+[src/SimpleModule/](../src/SimpleModule/README.md) is the one to copy, and
+[src/FullModule/](../src/FullModule/README.md) is the one to read, because it overrides every hook
+of `xewe::Module`.
 
 | | SimpleModule | FullModule |
 |---|---|---|
@@ -31,24 +26,20 @@ and its lines in `xewe-os.ino`.
 
 One brand word, every form derived from it.
 
-- **Prose:** **XeWe OS** (product), **XeWe** (brand): "XeWe OS firmware", "the XeWe tools".
-- **Repos, packages, folders, files, CLI, env home:** lowercase `xewe`, kebab `xewe-os-*`
-  (`xewe-os-core`, `xewe.toml`, `xewe`, `~/.xewe-os`).
-- **C++ namespace:** `xewe::` (`xewe::Module`, `xewe::str::parse_hex_color`).
-- **C++ and Python type names:** `XeWe` prefix (`XeWeCore`, `XeWeOs`, `XeWeModules`,
-  `XeWeError`, `XeWeContext`).
-- **Macros, build defines, environment variables of the core and tools:** `XEWE_*`
-  (`XEWE_TESTING`, `XEWE_HOME`, `XEWE_CORE_DEVICE_NAME`).
-- **The core's configuration values:** `XEWE_CORE_<PARAM>` (`XEWE_CORE_SERIAL_BAUD`).
-- **A modules-repo module's compile time values:** `XEWE_<SLUG>_<PARAM>` (`XEWE_WIFI_DEBUG`).
-- **Values of a project-local module** (`src/<Folder>/Config.h`): `XEWE_<ID>_<PARAM>`
-  (`XEWE_SIMPLE_MODULE_PERIOD_S`, `XEWE_FULL_MODULE_LEVEL`).
-- **Module slug** (modules repo folder, `--modules` names): lowercase kebab,
-  `^[a-z0-9][a-z0-9-]*$` (`wifi`, `web-interface`).
-- **Module id** (CLI group and NVS namespace): lowercase snake, `^[a-z][a-z0-9_]*$`, at most
-  15 characters, never branded (`$wifi`, `$full_module`).
-- **Module folder and class:** PascalCase, `^[A-Z][A-Za-z0-9]*$` (`Wifi`, `WebInterface`).
-- **Arduino library name:** `XeWeCore` (registered; never changes).
+| Thing | Form |
+|---|---|
+| Prose | **XeWe OS** (product), **XeWe** (brand): "XeWe OS firmware", "the XeWe tools" |
+| Repos, packages, folders, files, CLI, env home | lowercase `xewe`, kebab `xewe-os-*` (`xewe-os-core`, `xewe.toml`, `xewe`, `~/.xewe-os`) |
+| C++ namespace | `xewe::` (`xewe::Module`, `xewe::str::parse_hex_color`) |
+| C++ and Python type names | `XeWe` prefix (`XeWeCore`, `XeWeOs`, `XeWeModules`, `XeWeError`, `XeWeContext`) |
+| Macros, build defines, environment variables of the core and tools | `XEWE_*` (`XEWE_TESTING`, `XEWE_HOME`, `XEWE_CORE_DEVICE_NAME`) |
+| The core's configuration values | `XEWE_CORE_<PARAM>` (`XEWE_CORE_SERIAL_BAUD`) |
+| A modules-repo module's compile time values | `XEWE_<SLUG>_<PARAM>` (`XEWE_WIFI_DEBUG`) |
+| Values of a project-local module (`src/<Folder>/Config.h`) | `XEWE_<ID>_<PARAM>` (`XEWE_SIMPLE_MODULE_PERIOD_S`, `XEWE_FULL_MODULE_LEVEL`) |
+| Module slug (modules repo folder, `--modules` names) | lowercase kebab, `^[a-z0-9][a-z0-9-]*$` (`wifi`, `web-interface`) |
+| Module id (CLI group and NVS namespace) | lowercase snake, `^[a-z][a-z0-9_]*$`, at most 15 characters, never branded (`$wifi`, `$full_module`) |
+| Module folder and class | PascalCase, `^[A-Z][A-Za-z0-9]*$` (`Wifi`, `WebInterface`) |
+| Arduino library name | `XeWeCore` (registered; never changes) |
 
 Further rules:
 

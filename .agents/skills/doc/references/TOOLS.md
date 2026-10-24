@@ -1,10 +1,10 @@
 # Tools
 
-`xewe` comes from `xewe-os-tools`. Run it as `build/tools/.venv/bin/python -m xewe <command>` or through `./run.sh`. Every flag is in the tools' `doc/spec.md`, and the everyday commands are in `doc/xewe_os_ecosystem.md`.
+`xewe` comes from `xewe-os-tools`. Run it as `build/tools/.venv/bin/python -m xewe <command>` or through `./run.sh`. Every flag is in the tools' `doc/spec.md`, and the everyday commands are in `doc/XEWE_OS_ECOSYSTEM.md`.
 
 ## xewe.toml writes
 
-Only `xewe manifest update`, `xewe modules select`, `setup --modules`, the first-setup menu and `release` write `xewe.toml`. The template ships `selected = []`, and each project picks its modules at first setup and commits the choice. `setup --latest` tries the newest tags without editing the file. Builds never change `[project] version`.
+Only `xewe manifest update`, `xewe modules select`, `setup --modules`, the first-setup menu and `release` write `xewe.toml`. The template ships no module selection, and each project picks its modules at first setup and commits the choice. `setup --latest` tries the newest tags without editing the file. Builds never change `[project] version`.
 
 ## Test layers (D14)
 
@@ -12,7 +12,7 @@ Tests live in `tests/unit/` and `tests/board/` and nowhere else. Unit tests need
 
 ## Cost and isolation (D15)
 
-A build costs about a minute per chip, so `build` and `test` compile only the selected chip. The c3, c6 and s3 matrix runs with `--all-chips`. CI builds every chip, `scripts/release.sh` builds none.
+A build costs about a minute per chip, so `build` and `test` compile only the selected chip. The full chip matrix runs with `--all-chips`. CI builds every chip, `scripts/release.sh` builds none.
 
 The shared toolchain is installed once per machine in `~/.xewe-os/build-tools/` (`XEWE_HOME` moves it). The tools never read or write `~/.arduino15` or `~/Arduino`. `--arduino-data DIR` reuses an installed esp32 core.
 

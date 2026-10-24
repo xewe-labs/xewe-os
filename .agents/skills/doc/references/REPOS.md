@@ -1,6 +1,6 @@
 # Repos
 
-XeWe OS is four repositories under github.com/xewe-labs. The refs a project uses are in `xewe.toml`.
+XeWe OS is four repositories under github.com/xewe-labs. `xewe.toml` holds the refs a project uses.
 
 ## Where a change goes
 
@@ -22,4 +22,4 @@ A module that only one product needs stays in that product's `src/` (D28). The c
 - Every repo has `README.md` and `LICENSE.txt` at the root, long pages in `doc/`, the agent guide in `.agents/` and CI in `.github/workflows/` (D25).
 - Nothing generated is committed and there are no submodules (D11). `build/`, `src/Modules.h` and `run.sh` can be deleted at any time and `./setup.sh` rebuilds them from `xewe.toml`.
 
-`doc/xewe_os_ecosystem.md` covers what `./setup.sh` installs and the committed versus generated split. This repo's `static/` is output of `xewe release` and nothing in it is tracked.
+`doc/XEWE_OS_ECOSYSTEM.md` covers what `./setup.sh` installs and the committed versus generated split. This repo's `static/` is output of `xewe release` and nothing in it is tracked.

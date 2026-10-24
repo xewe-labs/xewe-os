@@ -1,17 +1,4 @@
-"""Board tests of the two project-local sample modules: `$simple_module` (src/SimpleModule/) and
-`$full_module` (src/FullModule/). Run by `xewe test` with every project test.
-
-Hardware preconditions: a provisioned board (first boot done, `xewe provision`). Nothing wired.
-`$simple_module` greets `hello <name>` every period_s seconds while enabled.
-`xewe provision` answers "enable?" with n for a module outside XEWE_PROVISION_MODULES, so either
-sample may be enabled or disabled: every test works in both states and leaves it as it found it.
-The settings table commands (`set`/`get`/`schema`) work while a module is disabled.
-The pin-claim test needs the pins module and XEWE_TEST_FULL_MODULE_PIN (a free output GPIO; the
-module toggles it every 10 s while enabled); it is skipped otherwise.
-
-Every disable wipes the module's NVS namespace (core Module::reset): the round trip below resets
-`$full_module` settings (level, label, token, pin, presets) to their defaults.
-"""
+"""Board tests of $simple_module and $full_module on a provisioned board; see tests/README.md."""
 
 import json
 import os
@@ -84,9 +71,6 @@ def _pins_present(serial):
         timeout=5,
     )
     return not m[0].startswith("Unknown")
-
-
-# ---- $simple_module ----
 
 
 def _simple_enable(serial, name="world", period="10"):
@@ -227,9 +211,6 @@ def test_settings_survive_restart(serial):
         serial.command(
             f"${FULL_ID} set level {level}", expect=rf"^level={level}$", timeout=5
         )
-
-
-# ---- $full_module ----
 
 
 def test_full_status(serial):

@@ -20,8 +20,9 @@ The version is `[project] version` in `xewe.toml`. Never write it as a literal i
 
 ## Sample modules
 
-`src/SimpleModule/` (minimal) and `src/FullModule/` (every hook) are teaching code, and their
-comments explain the `xewe::Module` API to the reader. They must compile against the current
+`src/SimpleModule/` (minimal) and `src/FullModule/` (every hook) are teaching code. Their
+comments explain the `xewe::Module` API and nothing else: no banner lines and no comment that
+restates the next line. They must compile against the current
 core with no warnings. When the core's module API changes, update both and their READMEs in
 the same change.
 

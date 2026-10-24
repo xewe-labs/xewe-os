@@ -9,7 +9,7 @@ description: >
 
 # writing_a_module
 
-Read `doc/writing_a_module.md` first; it also holds the naming rules.
+Read `doc/WRITING_A_MODULE.md` first; it also holds the naming rules.
 
 ## When to use
 
@@ -18,7 +18,7 @@ Read `doc/writing_a_module.md` first; it also holds the naming rules.
 
 ## Procedure
 
-1. Read `doc/writing_a_module.md`, then `src/SimpleModule/README.md` (and `src/FullModule/README.md`
+1. Read `doc/WRITING_A_MODULE.md`, then `src/SimpleModule/README.md` (and `src/FullModule/README.md`
    if you need a hook it shows).
 2. Pick names: folder and class PascalCase, id snake case of at most 15 characters, define
    prefix `XEWE_<ID>_`. Check them against the naming section of the doc.
@@ -41,7 +41,7 @@ Read `doc/writing_a_module.md` first; it also holds the naming rules.
 
 - Format, unit tests and the build are green, with 0 warnings from the new code.
 - `xewe brand-lint .` is clean.
-- If the id, a command or a first-boot prompt changed, `doc/writing_a_module.md` and the
+- If the id, a command or a first-boot prompt changed, `doc/WRITING_A_MODULE.md` and the
   sample README say the same (`.agents/skills/doc/references/CODE_RULES.md`).
 
 ## Never

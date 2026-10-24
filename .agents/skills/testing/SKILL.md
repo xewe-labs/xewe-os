@@ -9,7 +9,7 @@ description: >
 
 # testing
 
-Read `doc/testing.md` first. Run the tools as `build/tools/.venv/bin/python -m xewe` (below:
+Read `doc/TESTING.md` first. Run the tools as `build/tools/.venv/bin/python -m xewe` (below:
 `xewe`) from the project root, after `./setup.sh`.
 
 ## When to use
@@ -19,7 +19,7 @@ Read `doc/testing.md` first. Run the tools as `build/tools/.venv/bin/python -m x
 
 ## Procedure
 
-1. Read `doc/testing.md`.
+1. Read `doc/TESTING.md`.
 2. For a compile-only session run `export XEWE_NO_BOARD=1` first: no port is opened.
 3. Unit tests, no board needed: `xewe test --unit-only` (add `-v`, or `-- -k NAME` for pytest).
 4. Board tests: `xewe test --chip c3 -- -m board`. With no board the line

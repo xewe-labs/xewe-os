@@ -10,7 +10,7 @@ description: >
 
 # xewe_os_ecosystem
 
-Read `doc/xewe_os_ecosystem.md` first. Paths are relative to the project root.
+Read `doc/XEWE_OS_ECOSYSTEM.md` first. Paths are relative to the project root.
 
 ## When to use
 
@@ -20,7 +20,7 @@ Read `doc/xewe_os_ecosystem.md` first. Paths are relative to the project root.
 
 ## Procedure
 
-1. Read `doc/xewe_os_ecosystem.md`: the five repositories, committed vs generated, Config.h.
+1. Read `doc/XEWE_OS_ECOSYSTEM.md`: the five repositories, committed vs generated, Config.h.
 2. Place the change: host tooling goes to xewe-os-tools, library code every firmware needs to
    xewe-os-core, a feature some firmwares need to xewe-os-modules, this firmware's own code to
    this repository (`src/`, `xewe-os.ino`, `Config.h`).

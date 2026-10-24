@@ -19,7 +19,7 @@ A full ecosystem release goes in dependency order: tools, core, modules, `xewe-o
 
 ## Releasing this repo
 
-Run `scripts/release.sh X.Y.Z --notes "line"`. The header of the script lists the six stages, the refusals and `--resume`. Facts the script does not show:
+Run `scripts/release.sh X.Y.Z --notes "line"`. `scripts/README.md` lists the stages, the refusals and `--resume`. Facts the script does not show:
 
 - The tag message is the notes, a blank line and `release_card.md`. The release job in `xewe-release.yml` builds each chip, checks the card against its own runs and publishes the GitHub Release.
 - A tag push starts only the release job of `ci.yml`. The build job runs on branches and pull requests.

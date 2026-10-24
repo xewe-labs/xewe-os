@@ -15,16 +15,16 @@ class SimpleModule : public xewe::Module {
 public:
     explicit SimpleModule(xewe::Os& host);
 
-    void begin_routines_init() override; // first boot: ask the name and the period
-    void begin_routines_common() override; // every boot: start the greeting timer
-    void loop() override; // prints the greeting when the timer is done
-    xewe::Settings settings() const override; // name, period_s
+    void begin_routines_init() override;
+    void begin_routines_common() override;
+    void loop() override;
+    xewe::Settings settings() const override;
 
 protected:
-    void on_setting_changed(const xewe::SettingDef& def) override; // period_s: restart the timer
+    void on_setting_changed(const xewe::SettingDef& def) override;
 
 private:
-    std::string who; // row "name"
-    uint16_t period_s = XEWE_SIMPLE_MODULE_PERIOD_S; // row "period_s"
+    std::string who;
+    uint16_t period_s = XEWE_SIMPLE_MODULE_PERIOD_S;
     xewe::AsyncTimer<uint8_t> greet_timer;
 };

@@ -1,6 +1,4 @@
-"""Unit tests of the two project-local sample modules (src/SimpleModule/, src/FullModule/):
-source facts only, no board and no build. They have no module.properties; the sketch declares
-them."""
+"""Source checks of the two sample modules; they have no module.properties, the sketch declares them."""
 
 import re
 from pathlib import Path

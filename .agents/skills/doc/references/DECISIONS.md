@@ -3,7 +3,7 @@
 Each line records one decision that a later change could undo by accident. Write it as a date,
 the decision, and the reason, with the newest line last.
 
-D7 is unused. The dates of D1 to D24 are the commits that first contained the id in ARCHITECTURE.md (git log -S), so the real decision may be older.
+D7 is unused. The dates of D1 to D24 are the commits that first contained the id (git log -S), so the real decision may be older.
 
 2026-10-08 D1 Target hardware is ESP32-C3, -C6 and -S3 only, because the library metadata names these three.
 2026-10-08 D2 No OTA, because the partitions stay `no_ota` and flashing is serial only.

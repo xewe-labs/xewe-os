@@ -58,18 +58,15 @@ what exists (`*` = selected). Zero modules is a valid firmware.
 
 ## Committed vs generated
 
-- **Committed:** `xewe-os.ino`, `Config.h`, `xewe.toml`, `setup.sh`, `src/SimpleModule/`,
-  `src/FullModule/`, `tests/`, `scripts/release.sh`, `README.md`, `doc/`, `LICENSE.txt`,
-  `.github/workflows/ci.yml`, `.agents/`.
-- **Generated, ignored, safe to delete:** `build/`, `src/Modules.h`, `run.sh` (`./setup.sh`
-  writes all three again); a release run's results are in `build/release/<version>/`.
-- **Ignored, yours:** `.env`, the credentials `xewe provision` reads. It is optional; you create
-  it, nothing writes it.
-- **Shared, outside the project:** `~/.xewe-os/build-tools/`. Deleting it only means the next
-  setup downloads it again.
+| Kind | Files |
+|---|---|
+| Committed | `xewe-os.ino`, `Config.h`, `xewe.toml`, `setup.sh`, `src/SimpleModule/`, `src/FullModule/`, `tests/`, `scripts/`, `README.md`, `doc/`, `LICENSE.txt`, `.github/workflows/ci.yml` |
+| Generated, ignored, safe to delete | `build/`, `src/Modules.h`, `run.sh` (`./setup.sh` writes all three again); a release run's results are in `build/release/<version>/` |
+| Ignored, yours | the dotenv file `xewe provision` reads; it is optional, you create it and nothing writes it |
+| Shared, outside the project | `~/.xewe-os/build-tools/`; deleting it only means the next setup downloads it again |
 
-No submodules. Never edit `src/Modules.h` or anything in `build/` by hand; setup regenerates
-them.
+The project has no submodules. Setup regenerates `src/Modules.h` and everything in `build/`, so
+hand edits there are lost.
 
 ## Config.h
 
@@ -135,28 +132,9 @@ shebang is stale; re-run `./setup.sh` to fix it. Flags are in the
 `./run.sh`, `xewe flash` and `xewe test` compile, then print
 `compiled, not run: no board attached (...)` and exit 0. Set `XEWE_NO_BOARD=1` for compile-only
 sessions (CI, scripts): no port is ever opened, even with a board plugged in. See
-[testing.md](testing.md).
+[TESTING.md](TESTING.md).
 
 ## Releasing
 
-A release is one command. The step-by-step reference is the header of
-[scripts/release.sh](../scripts/release.sh).
-
-1. `scripts/release.sh X.Y.Z --notes "line" [--hardware c3]` (`--notes` once per line, 1 to 3
-   lines, or `--notes-file FILE`) refuses unless you are on a clean `main` level with
-   `origin/main`, the tag is free, `ci.yml` and `xewe.toml` name the same tools tag and the
-   notes pass `xewe release-notes check`; it lists every problem.
-2. It sets the version in `xewe.toml`, then runs setup, module validation and the unit tests.
-   With `--hardware c3` it also flashes that chip and runs its board tests; without it the board
-   tests are compiled, not run. Results are in `build/release/X.Y.Z/`.
-3. It renders `build/release/X.Y.Z/release_card.md`; the card lists every test and what was not
-   covered.
-4. It commits the version line as `release X.Y.Z`.
-5. It tags that commit `X.Y.Z` (annotated); the tag message is the notes, a blank line and the
-   card. It pushes `main`, then the tag; the tag equals `[project] version`.
-6. CI (`ci.yml`, release job) builds c3, c6 and s3, checks the card against its own runs and
-   publishes a GitHub Release; the script waits for it and prints its URL.
-7. `--resume` continues a run that stopped after the tag or the commit.
-8. The images are release assets only and are never committed.
-9. Each asset has a direct URL:
-   `https://github.com/xewe-labs/xewe-os/releases/download/<tag>/<asset>`.
+`scripts/release.sh X.Y.Z --notes "line"` runs a release. The stages, flags and exit codes are in
+[scripts/README.md](../scripts/README.md).

@@ -1,6 +1,4 @@
-"""Unit tests of the project's Config.h (the core's doc/config.md): source facts only, no board and
-no build. The tools append module blocks to this file and never rewrite it, so the template ships it
-in the shape they expect."""
+"""Source checks of Config.h: the tools append module blocks to it, so its shape must not change."""
 
 import re
 from pathlib import Path

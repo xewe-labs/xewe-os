@@ -9,7 +9,7 @@ if it does.
 |---|---|
 | Set up, on a fresh project or after `xewe.toml` changed | `./setup.sh`; add `</dev/null` in a script so no module menu appears |
 | See the compiler command first | `xewe build --chip c3 --dry-run` prints the arduino-cli command |
-| Build | `xewe build --chip c3`; run `xewe build --all-chips` (c3, c6, s3) before calling a change done |
+| Build | `xewe build --chip c3`; run `xewe build --all-chips` before calling a change done |
 | Test | `xewe test --unit-only`, or `xewe test --module SLUG` |
 | Modules | `xewe modules list`, `xewe modules validate [PATH]` |
 | Look around | `xewe doctor`, `xewe manifest show`, `xewe boards --no-probe` |
@@ -27,7 +27,7 @@ quotes: `--define 'XEWE_CORE_DEVICE_NAME="Bench"'`.
 of the two tools workflows in `.github/workflows/ci.yml` name the same tag. Move all of them
 to a new tag with `xewe manifest update`, and never edit a commit SHA by hand.
 
-`xewe.toml` keeps `[modules] selected = []` in this template. Each project made from it
+This template ships an empty module selection. Each project made from it
 chooses its modules at first setup and commits that choice. Only `xewe modules select`,
 `./setup.sh --modules`, the first-setup menu and `xewe manifest update` write `xewe.toml`, and
 only when asked.
@@ -35,7 +35,7 @@ only when asked.
 ## Release
 
 Never run `scripts/release.sh`. It commits, tags and pushes, and the maintainer runs it. Read
-its header before explaining it.
+`scripts/README.md` before explaining it.
 
 Tags are `X.Y.Z` with no `v`. The script starts only on a clean `main` that is level with
 origin, and it refuses unless the one to three notes lines pass `xewe release-notes check`.
