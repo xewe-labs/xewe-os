@@ -2,6 +2,8 @@
 
 The firmware template of XeWe OS for ESP32-C3, -C6 and -S3.
 
+<p align="center"><img src="doc/media/HERO.webp" alt="First boot" width="420"></p>
+
 ## Problem
 
 - You install arduino-cli, the esp32 core and the libraries by hand on every machine, and nothing records which versions the firmware was built with.
