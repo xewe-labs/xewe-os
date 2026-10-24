@@ -40,6 +40,9 @@ void FullModule::schema_extra(xewe::SchemaOut& out) const {
     }
 }
 
+// ---- begin ----
+
+// Loads the presets blob and claims the tick LED pin.
 void FullModule::begin_routines_required() {
     load_presets();
     pin_claimed = pin != 255 && xewe::pins::claim(pin, id.c_str());
@@ -47,7 +50,7 @@ void FullModule::begin_routines_required() {
         pinMode(pin, OUTPUT);
 }
 
-// Bounded prompt; without the PROMPT define the build's level is stored silently.
+// Asks the starting level (bounded), or stores the build's level without a question.
 void FullModule::begin_routines_init() {
 #ifdef XEWE_FULL_MODULE_LEVEL_PROMPT
     bool answered = false;
@@ -61,15 +64,20 @@ void FullModule::begin_routines_init() {
 #endif
 }
 
+// Prints the stored values.
 void FullModule::begin_routines_regular() {
     os.serial.printf("%s: level %u, active %s, label '%s'", name.c_str(), level,
         active ? "yes" : "no", label.c_str());
 }
 
+// Starts the tick timer.
 void FullModule::begin_routines_common() {
     tick_timer.initiate();
 }
 
+// ---- run time ----
+
+// Counts a tick and toggles the LED when the timer is done.
 void FullModule::loop() {
     if (!active || tick_timer.is_not_done())
         return;
@@ -81,11 +89,14 @@ void FullModule::loop() {
         os.serial.printf("%s: tick %lu", name.c_str(), (unsigned long)ticks);
 }
 
-// Always call the base: it owns the NVS flags.
+// ---- flow: always call the base, it owns the NVS flags ----
+
+// Nothing to add to the base.
 void FullModule::enable(const bool verbose, const bool do_restart) {
     Module::enable(verbose, do_restart);
 }
 
+// Stops the tick timer once disabled.
 void FullModule::disable(const bool verbose, const bool do_restart) {
     Module::disable(verbose, do_restart);
     if (is_disabled())
@@ -102,6 +113,9 @@ void FullModule::reset(const bool verbose, const bool do_restart, const bool kee
     Module::reset(verbose, do_restart, keep_enabled);
 }
 
+// ---- info ----
+
+// Adds the tick count and the presets state to the base status.
 std::string FullModule::status(const bool verbose) const {
     std::string s = Module::status(false) + "\nticks: " + std::to_string(ticks);
     if (!presets_owned)
@@ -110,6 +124,8 @@ std::string FullModule::status(const bool verbose) const {
         os.serial.print(s);
     return s;
 }
+
+// ---- public API ----
 
 void FullModule::set_level(uint16_t value, const void* origin) {
     if (is_disabled(true))
@@ -130,6 +146,8 @@ void FullModule::on_setting_changed(const xewe::SettingDef& def) {
     const void* origin = level_origin;
     listeners.notify([&](LevelListener& l) { l.on_level(level, origin); });
 }
+
+// ---- commands ----
 
 // `preset <i>` uses a preset, `preset <i> <level>` stores one.
 void FullModule::register_commands() {
@@ -153,6 +171,8 @@ void FullModule::register_commands() {
         }});
 }
 
+// ---- NVS ----
+
 // Defaults when the blob is missing or foreign; a foreign blob is never overwritten.
 void FullModule::load_presets() {
     FullModulePresets stored;
@@ -165,6 +185,7 @@ void FullModule::load_presets() {
             name.c_str(), stored.schema, presets.schema);
 }
 
+// Writes the blob unless it belongs to another firmware.
 void FullModule::save_presets() {
     if (!presets_owned) {
         os.serial.print("Changed for this boot only (foreign presets in NVS)");

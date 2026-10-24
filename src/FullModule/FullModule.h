@@ -33,22 +33,27 @@ class FullModule : public xewe::Module {
 public:
     explicit FullModule(xewe::Os& host);
 
+    // ---- begin ----
     void begin_routines_required() override; // every boot, first
     void begin_routines_init() override; // until init completes once
     void begin_routines_regular() override; // every boot after that
     void begin_routines_common() override; // every boot, last
 
+    // ---- run time ----
     void loop() override; // while enabled; never blocks
 
+    // ---- flow ----
     void enable(const bool verbose = false, const bool do_restart = true) override;
     void disable(const bool verbose = false, const bool do_restart = true) override;
     void reset(const bool verbose = false, const bool do_restart = true,
         const bool keep_enabled = true) override;
 
+    // ---- info ----
     std::string status(const bool verbose = false) const override;
-    xewe::Settings settings() const override;
-    void schema_extra(xewe::SchemaOut& out) const override;
+    xewe::Settings settings() const override; // the table
+    void schema_extra(xewe::SchemaOut& out) const override; // the presets
 
+    // ---- public API ----
     void set_level(uint16_t value, const void* origin = nullptr);
     void use_preset(uint8_t index);
 
@@ -62,6 +67,7 @@ private:
     void load_presets();
     void save_presets();
 
+    // table rows
     uint16_t level = XEWE_FULL_MODULE_LEVEL;
     bool active = XEWE_FULL_MODULE_ACTIVE;
     std::string label;

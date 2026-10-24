@@ -42,7 +42,7 @@ hello bench
 
 ## Install
 
-You need Python 3.11 or newer and git. No sudo is used.
+You need Python 3.11 or newer and git. Setup installs into the project folder and `~/.xewe-os`, so it never needs sudo.
 
 ```sh
 git clone https://github.com/xewe-labs/xewe-os my-fw && cd my-fw
