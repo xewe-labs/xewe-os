@@ -32,7 +32,7 @@ xewe test --chip c3 -- -m board
 - `--no-board` compiles and never opens a port, even with a board plugged in:
   `xewe test --chip c3 --no-board -- -m board`.
 - `XEWE_NO_BOARD=1` in the environment does the same for every command; use it for compile-only
-  sessions such as CI and agents. `test` still compiles; `flash`, `run` and `serial` exit 4.
+  sessions such as CI and scripts. `test` still compiles; `flash`, `run` and `serial` exit 4.
 - `--no-flash` tests the firmware already on the board. `--module SLUG` selects a module's tests.
 - Never pass `--erase` or flash a board unless asked: flashing keeps NVS, erasing does not.
 

@@ -27,7 +27,6 @@ Needs Python >= 3.11 and git, no sudo. Without a board the commands compile and 
 | The smallest module | [src/SimpleModule/README.md](src/SimpleModule/README.md) |
 | A module with every hook | [src/FullModule/README.md](src/FullModule/README.md) |
 | Releasing | the header of [scripts/release.sh](scripts/release.sh) |
-| Working here as a coding agent | [.agents/AGENTS.md](.agents/AGENTS.md) |
 | Every `xewe` command | [tools commands][tools] |
 | XeWeCore | [xewe-os-core](https://github.com/xewe-labs/xewe-os-core) |
 | The modules | [xewe-os-modules](https://github.com/xewe-labs/xewe-os-modules) |

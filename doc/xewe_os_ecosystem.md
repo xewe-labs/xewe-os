@@ -1,8 +1,7 @@
 # The XeWe OS ecosystem
 
 How the repositories fit together, what `./setup.sh` does, what is committed and what is
-generated, how `Config.h` works, and the everyday commands. For why it is built this way see
-[.agents/doc/architecture.md](../.agents/doc/architecture.md).
+generated, how `Config.h` works, and the everyday commands.
 
 ## The five repositories
 
@@ -70,8 +69,7 @@ what exists (`*` = selected). Zero modules is a valid firmware.
   setup downloads it again.
 
 No submodules. Never edit `src/Modules.h` or anything in `build/` by hand; setup regenerates
-them. The full `build/` tree is in
-[.agents/doc/architecture.md](../.agents/doc/architecture.md#build-layout).
+them.
 
 ## Config.h
 
@@ -136,7 +134,7 @@ shebang is stale; re-run `./setup.sh` to fix it. Flags are in the
 
 `./run.sh`, `xewe flash` and `xewe test` compile, then print
 `compiled, not run: no board attached (...)` and exit 0. Set `XEWE_NO_BOARD=1` for compile-only
-sessions (CI, agents): no port is ever opened, even with a board plugged in. See
+sessions (CI, scripts): no port is ever opened, even with a board plugged in. See
 [testing.md](testing.md).
 
 ## Releasing

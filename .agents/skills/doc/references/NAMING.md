@@ -11,7 +11,7 @@ One brand word, every form derived from it.
 | Macros, build defines, environment variables of the core and tools | `XEWE_*` | `XEWE_TESTING`, `XEWE_HOME`, `XEWE_CORE_DEVICE_NAME` |
 | The core's configuration values | `XEWE_CORE_<PARAM>`; see [doc/config.md](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md) in xewe-os-core | `XEWE_CORE_SERIAL_BAUD` |
 | A module's compile-time values in its `Config.h` | `XEWE_<SLUG>_<PARAM>`, slug in upper case with `_` for `-` | `XEWE_WIFI_DEBUG` |
-| The values of a project-local module (xewe-os and the projects made from it), in `src/<Folder>/Config.h` | `XEWE_<ID>_<PARAM>`, the module id in upper case; `<PARAM>` of a runtime default or first-boot value is its settings key in upper case | `XEWE_YOUR_MODULE_BEAT_S`, `XEWE_YOUR_MOD_FULL_LEVEL` |
+| The values of a project-local module (xewe-os and the projects made from it), in `src/<Folder>/Config.h` | `XEWE_<ID>_<PARAM>`, the module id in upper case; `<PARAM>` of a runtime default or first-boot value is its settings key in upper case | `XEWE_SIMPLE_MODULE_PERIOD_S`, `XEWE_FULL_MODULE_LEVEL` |
 | Module slug (folder in the modules repo, `--modules` names) | lowercase kebab, `^[a-z0-9][a-z0-9-]*$` | `wifi`, `web-interface` |
 | Module id (CLI group and NVS namespace) | lowercase snake, `^[a-z][a-z0-9_]*$`, at most 15 characters, never branded | `$wifi`, `$full_module` |
 | Module folder and class | PascalCase, `^[A-Z][A-Za-z0-9]*$` | `Wifi`, `WebInterface` |

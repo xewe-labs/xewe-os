@@ -37,12 +37,12 @@ Read `doc/xewe_os_ecosystem.md` first. Paths are relative to the project root.
 
 - `build/tools/.venv/bin/python -m xewe build --chip c3` passes after a source change.
 - `xewe brand-lint .` is clean when you wrote prose.
-- Say what you ran and label anything unverified (P-07, P-08).
+- Say what you ran and label anything unverified (R-06).
 
 ## Never
 
-- Commit, push, tag or release without being asked (P-09); the owner runs releases.
-- Edit generated files (X-02) or commit them (X-01).
-- Move refs by hand-editing a SHA; use `xewe manifest update` when asked (X-05).
-- Read, print or copy a dotenv or key file (X-10).
-- Change `[modules] selected` unless asked (X-04).
+- Commit, push, tag or release (R-10); the owner runs releases.
+- Edit or commit generated files (`.agents/skills/doc/references/GENERATED_FILES.md`).
+- Move refs by hand-editing a SHA; refs are pinned to tags (`.agents/skills/doc/references/CODE_RULES.md`). Use `xewe manifest update` when asked.
+- Read, print or copy a dotenv or key file (R-04).
+- Change `[modules] selected` unless asked; the template ships no module selection (`.agents/skills/doc/references/CODE_RULES.md`).

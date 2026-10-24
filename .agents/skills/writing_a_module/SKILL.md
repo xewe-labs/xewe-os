@@ -42,13 +42,13 @@ Read `doc/writing_a_module.md` first; it also holds the naming rules.
 - Format, unit tests and the build are green, with 0 warnings from the new code.
 - `xewe brand-lint .` is clean.
 - If the id, a command or a first-boot prompt changed, `doc/writing_a_module.md` and the
-  sample README say the same (X-09).
+  sample README say the same (`.agents/skills/doc/references/CODE_RULES.md`).
 
 ## Never
 
-- Edit `src/Modules.h` or `build/` (X-02); `xewe modules generate` never touches a
+- Edit `src/Modules.h` or `build/`, which are generated (`.agents/skills/doc/references/GENERATED_FILES.md`); `xewe modules generate` never touches a
   project-local module.
 - Use an id longer than 15 characters or a branded id.
 - Run `xewe modules select` or flash a board unless asked.
-- Commit or push without being asked (P-09).
-- Read, print or copy a dotenv or key file (X-10).
+- Commit or push.
+- Read, print or copy a dotenv or key file.
