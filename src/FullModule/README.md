@@ -53,4 +53,4 @@ The sketch's `SketchLevelListener` implements `LevelListener` and is added with
 `$full_module status | reset | enable | disable | set | get | schema | preset <0-2> [<0-100>]`;
 `$help full_module` lists them.
 
-[config]: https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md
+[config]: https://github.com/xewe-labs/xewe-os-core/blob/main/doc/CONFIG.md

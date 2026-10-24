@@ -16,9 +16,9 @@ A module that only one product needs stays in that product's `src/` (D28). The c
 ## Boundaries
 
 - The modules repo has no toolchain of its own. A module is built and tested through an `xewe-os` checkout (D21).
-- The core's CI runs host tests, the examples and `arduino-lint` against its `doc/library-rules.md`, and the core is released by its own `scripts/release.sh` (D18).
+- The core's CI runs host tests, the examples and `arduino-lint` against its `doc/LIBRARY_RULES.md`, and the core is released by its own `scripts/release.sh` (D18).
 - The tools carry their own spec in `doc/spec.md` and the webui exporter in `doc/webui.md`. The spec is the authority for the `build/` layout (its section 6).
-- The contract is in `doc/contract.md` of the modules repo and the module index in its `doc/modules.md`.
+- The contract is in `doc/CONTRACT.md` of the modules repo and the module index in its `doc/modules.md`.
 - Every repo has `README.md` and `LICENSE.txt` at the root, long pages in `doc/`, the agent guide in `.agents/` and CI in `.github/workflows/` (D25).
 - Nothing generated is committed and there are no submodules (D11). `build/`, `src/Modules.h` and `run.sh` can be deleted at any time and `./setup.sh` rebuilds them from `xewe.toml`.
 

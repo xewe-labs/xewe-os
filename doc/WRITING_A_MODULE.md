@@ -115,7 +115,7 @@ an unattended device never waits forever.
 ## Config.h of a module
 
 A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
-core's [doc/config.md](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md). The
+core's [doc/CONFIG.md](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/CONFIG.md). The
 file is pure preprocessor: it includes nothing and declares no code. After the header (three
 SPDX lines, the path, one multi-line block comment, `#pragma once`) come two sections in this
 order, each between its start and end marker lines, exactly as written:
@@ -177,7 +177,7 @@ example: it owns a listener set for its level, and the sketch adds a level liste
 Keep a module in `src/` while only this firmware needs it. A module that other firmwares need
 moves to [xewe-os-modules](https://github.com/xewe-labs/xewe-os-modules), as `modules/<slug>/`,
 where it follows that repository's
-[contract](https://github.com/xewe-labs/xewe-os-modules/blob/main/doc/contract.md) and is built
+[contract](https://github.com/xewe-labs/xewe-os-modules/blob/main/doc/CONTRACT.md) and is built
 and tested through an `xewe-os` checkout. There its values get a block in each project's
 `Config.h` under the prefix `XEWE_<SLUG>_`, and `xewe modules validate` checks its slug, id and
 folder.

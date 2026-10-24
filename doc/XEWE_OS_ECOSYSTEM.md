@@ -75,7 +75,7 @@ one block per selected module, each framed by bars with a `start` and an `end` l
 block has two sections: default runtime values, and compile time defined constants. Every
 generated line is a comment: uncomment a `#define` line and change the value to override the
 default. The specification is the core's
-[doc/config.md](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md).
+[doc/CONFIG.md](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/CONFIG.md).
 
 `./setup.sh` and `xewe modules select` append the block of a module the first time it is selected
 and never touch it again. `Config.h` includes nothing. `xewe build` puts three headers in front of

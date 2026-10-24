@@ -1,6 +1,6 @@
 # Module contract
 
-The full contract is `doc/contract.md` in `xewe-os-modules`. `doc/WRITING_A_MODULE.md` in this repo covers writing a module step by step, so only the rules that break silently are here.
+The full contract is `doc/CONTRACT.md` in `xewe-os-modules`. `doc/WRITING_A_MODULE.md` in this repo covers writing a module step by step, so only the rules that break silently are here.
 
 - `id` is at most 15 characters, is both the CLI group and the NVS namespace, and never changes. A change orphans stored settings.
 - The class derives from `xewe::Module`, lives in the global namespace and includes `<XeWeCore.h>`.

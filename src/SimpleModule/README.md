@@ -20,7 +20,7 @@ pattern is in [writing a module](../../doc/WRITING_A_MODULE.md).
 | `period_s` | integer | 1 to 3600 | `XEWE_SIMPLE_MODULE_PERIOD_S` (`10`) |
 
 The defaults live in this folder's `Config.h`, in the module form of the core's
-[configuration page](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/config.md).
+[configuration page](https://github.com/xewe-labs/xewe-os-core/blob/main/doc/CONFIG.md).
 
 ## First boot
 

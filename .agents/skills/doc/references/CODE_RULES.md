@@ -14,7 +14,7 @@ source file with `-include`. `Config.h` holds the core block and one block per s
 module, each framed by start and end lines. Every generated line is a comment, so uncomment a
 `#define` to override a value. First-boot lines stay commented out, and no
 `INJECTED_FROM_DOTENV` line is active, because the release script refuses one. The format is
-specified in `doc/config.md` of xewe-os-core.
+specified in `doc/CONFIG.md` of xewe-os-core.
 
 The version is `[project] version` in `xewe.toml`. Never write it as a literal in code.
 
@@ -30,14 +30,14 @@ the same change.
 ## Project-local modules
 
 A project-local module keeps its values in `src/<Folder>/Config.h`, in the module form of the
-core's `doc/config.md`: two sections, `#ifndef` groups, `/* */` comments, and `_PROMPT` only on
+core's `doc/CONFIG.md`: two sections, `#ifndef` groups, `/* */` comments, and `_PROMPT` only on
 a value asked at first boot. Names are `XEWE_<ID>_*` with the module id in upper case, such as
 `XEWE_SIMPLE_MODULE_*` and `XEWE_FULL_MODULE_*`. The user edits the file in place, and
 `xewe modules generate` never touches it.
 
 The module contract applies to these modules too: the constructor parameter is named `host`,
 lambdas capture `[this]`, nothing calls `cli(`, and ids are at most 15 characters. It lives in
-`doc/contract.md` and `.agents/RULES.md` of xewe-os-modules.
+`doc/CONTRACT.md` of xewe-os-modules.
 
 ## Comments and docs
 

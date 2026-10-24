@@ -21,4 +21,4 @@ The order in `xewe-os.ino` is `Config.h` first, so a plain Arduino IDE build rea
 - Include direction is Config.h, Utils, Serial, then Cli and Settings. FlexData comes before Nvs. Module depends on all of them and XeWeOs on Module. A new header must not point backwards.
 - The `$test` group of the board tests exists only with `XEWE_TESTING` defined.
 - Each component folder except `Testing/` has a README.
-- The core's configuration values are specified in the core's `doc/config.md`.
+- The core's configuration values are specified in the core's `doc/CONFIG.md`.
